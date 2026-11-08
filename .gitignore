@@ -1,0 +1,11 @@
+.env
+*.env
+*.db
+*.sqlite
+audio_ui/audio_cache/
+*.mp3
+*.wav
+__pycache__/
+*.pyc
+venv/
+.venv/
