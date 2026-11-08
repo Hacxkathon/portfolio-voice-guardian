@@ -124,3 +124,72 @@ def run_end_to_end_pipeline(
                 event_id, client_id, portfolio_id, exposure_eur,
                 exposure_weight_pct, estimated_annual_impact_eur,
                 impact_explanation, requires_advisor_action
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+        """, (
+            event_id,
+            client["client_id"],
+            client["portfolio_id"],
+            exposure,
+            weight,
+            annual_impact_eur,
+            explanation,
+            1 if extracted_event.mifid_review_suggested else 0
+        ))
+        impact_records.append((client, annual_impact_eur))
+
+    conn.commit()
+    print(f"[PIPELINE] 5. {len(impact_records)} clientes impactados calculados y guardados.")
+
+    # ------------------------------------------------------------------
+    # PASO D: Generación de Guiones por Perfil (Mariano)
+    # ------------------------------------------------------------------
+    print("[PIPELINE] 6. Generando briefings adaptados por nivel de conocimiento...")
+    for client, impact_eur in impact_records:
+        level = client["knowledge_level"]
+        name = client["client_name"]
+
+        if level == "BEGINNER":
+            investor_script = (
+                f"Hola {name}. Te informamos de que el fondo {asset['name']} en tu cartera "
+                f"ha actualizado sus gastos de gestión. Esto supondrá un coste aproximado de {impact_eur:.2f} euros al año. "
+                f"Tu inversión sigue funcionando con normalidad, pero tu asesor revisará si conviene mantenerlo "
+                f"o valorar otras alternativas sin comisiones extra."
+            )
+        else:  # PRIVATE_BANKING o EXPERIENCED
+            investor_script = (
+                f"Estimado/a {name}, le notificamos un ajuste de costes en {asset['name']} (ISIN: {asset['isin']}). "
+                f"La gestora ha incrementado la comisión fija en {extracted_event.numeric_delta_pct:.2f} puntos porcentuales. "
+                f"Sobre su posición actual de {client['market_value_eur']:,.2f} €, el arrastre anual estimado asciende a {impact_eur:,.2f} €. "
+                f"Su asesor ha marcado la posición para evaluar la migración a una clase limpia institucional."
+            )
+
+        advisor_summary = (
+            f"Alerta MiFID II para {name}: incremento de {extracted_event.numeric_delta_pct}% en costes. "
+            f"Arrastre anual de {impact_eur:,.2f} €. Acción sugerida: evaluar idoneidad y rotación."
+        )
+
+        cur.execute("""
+            INSERT INTO BRIEFINGS (
+                event_id, client_id, advisor_technical_summary,
+                investor_personalized_script, approval_status
+            ) VALUES (?, ?, ?, ?, ?);
+        """, (
+            event_id,
+            client["client_id"],
+            advisor_summary,
+            investor_script,
+            "PENDING_REVIEW"
+        ))
+
+    conn.commit()
+    conn.close()
+    print("[PIPELINE] 7. Ciclo completado. Briefings listos en SQLite para el Dashboard.")
+
+
+if __name__ == "__main__":
+    run_end_to_end_pipeline(
+        asset_id="AST_FD_01",
+        new_doc_text="Modificación de folleto de fondo...",
+        old_doc_text="Folleto anterior...",
+        is_simulation=True
+    )
