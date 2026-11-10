@@ -59,9 +59,10 @@ def init_db() -> None:
         doc_id TEXT PRIMARY KEY,
         asset_id TEXT NOT NULL,
         doc_type TEXT NOT NULL,              -- 'KIID', 'PROSPECTUS', 'EARNINGS_REPORT'
-        version TEXT NOT NULL,               -- 'V1', 'V2', etc.        publication_date TEXT NOT NULL,
+        version TEXT NOT NULL,               -- 'V1', 'V2', etc.     
         publication_date TEXT NOT NULL,
         raw_url_or_path TEXT,
+        content_hash TEXT UNIQUE NOT NULL,   -- aqui se almacena el hash del documento que se usa para verificar duplicados
         extracted_text TEXT,                 -- Nullable: se inserta vacío al detectar y se rellena al extraer
         processing_status TEXT DEFAULT 'DETECTED', -- 'DETECTED', 'EXTRACTING', 'PROCESSED', 'ERROR'
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

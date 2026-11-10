@@ -148,6 +148,6 @@ def ejecutar_trigger(
 # Bloque para probar la demo manualmente desde la terminal
 if __name__ == "__main__":
     RUTA_CARPETA = "data/demo_docs"
-    RUTA_DB = "db/database.sqlite"
+    RUTA_DB = "db/guardian.db"
     
     ejecutar_trigger(RUTA_CARPETA, RUTA_DB)

@@ -88,17 +88,25 @@ def seed_data() -> None:
     # 5. DOCUMENTO HISTÓRICO BASE (Solo V1: V2 lo creará el trigger de Denisa)
     documents = [
         (
-            "DOC_FD_V1",
-            "AST_FD_01",
-            "Prospectus 2025-Q4",
-            "2025-10-15",
-            "https://funds.example.com/evceu/kiid_v1.pdf",
-            "hash_evceu_v1_abc123",
-            "Gestión y comisiones corrientes del fondo: 1.20% anual sobre el patrimonio neto.",
-            "PROCESSED",  # processing_status
+            "DOC_FD_V1",                                  # doc_id
+            "AST_FD_01",                                  # asset_id
+            "PROSPECTUS",                                 # doc_type (Añadido)
+            "V1",                                         # version
+            "2025-10-15",                                 # publication_date
+            "https://funds.example.com/evceu/kiid_v1.pdf",# raw_url_or_path
+            "hash_evceu_v1_abc123",                       # content_hash
+            "Gestión y comisiones corrientes del fondo: 1.20% anual sobre el patrimonio neto.", # extracted_text
+            "PROCESSED",                                  # processing_status
         ),
     ]
-    cur.executemany("INSERT OR REPLACE INTO DOCUMENTS VALUES (?, ?, ?, ?, ?, ?, ?, ?);", documents)
+    
+    # ¡Añadimos los nombres exactos de las columnas para evitar errores!
+    cur.executemany("""
+        INSERT OR REPLACE INTO DOCUMENTS 
+        (doc_id, asset_id, doc_type, version, publication_date, raw_url_or_path, content_hash, extracted_text, processing_status) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+    """, documents)
+
 
     conn.commit()
     conn.close()
@@ -108,5 +116,4 @@ def seed_data() -> None:
 if __name__ == "__main__":
     seed_data()
 
-if __name__ == "__main__":
-    seed_data()
+
