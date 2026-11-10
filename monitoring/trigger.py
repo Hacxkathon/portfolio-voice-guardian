@@ -65,6 +65,7 @@ def registrar_documento(
             INSERT INTO DOCUMENTS (
                 doc_id,  
                 asset_id,
+                doc_type,
                 version,
                 publication_date,
                 content_hash,
