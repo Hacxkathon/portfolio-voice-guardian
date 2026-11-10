@@ -71,11 +71,12 @@ def registrar_documento(
                 content_hash,
                 extracted_text
             )
-            VALUES (?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 nuevo_id,
                 doc_info["asset_id"],
+                "Desconocido",
                 "NUEVA_VERSION",
                 fecha_publicacion,
                 doc_info["content_hash"],
