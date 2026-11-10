@@ -58,12 +58,13 @@ def init_db() -> None:
     CREATE TABLE IF NOT EXISTS DOCUMENTS (
         doc_id TEXT PRIMARY KEY,
         asset_id TEXT NOT NULL,
-        version_label TEXT NOT NULL,
+        doc_type TEXT NOT NULL,              -- 'KIID', 'PROSPECTUS', 'EARNINGS_REPORT'
+        version TEXT NOT NULL,               -- 'V1', 'V2', etc.        publication_date TEXT NOT NULL,
         publication_date TEXT NOT NULL,
-        source_url TEXT,
-        content_hash TEXT UNIQUE NOT NULL,
-        extracted_text TEXT NOT NULL,
-        is_simulated INTEGER DEFAULT 0,
+        raw_url_or_path TEXT,
+        extracted_text TEXT,                 -- Nullable: se inserta vacío al detectar y se rellena al extraer
+        processing_status TEXT DEFAULT 'DETECTED', -- 'DETECTED', 'EXTRACTING', 'PROCESSED', 'ERROR'
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (asset_id) REFERENCES ASSETS(asset_id)
     );
 
