@@ -63,9 +63,9 @@ def registrar_documento(
         cursor.execute(
             """
             INSERT INTO DOCUMENTS (
-                id,  -- ¡Corregido! El esquema de Jorge usa 'id', no 'doc_id'
+                doc_id,  
                 asset_id,
-                version_label,
+                version,
                 publication_date,
                 content_hash,
                 extracted_text
