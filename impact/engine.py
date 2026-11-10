@@ -19,28 +19,21 @@ PROFILE_SENSITIVE_EVENTS = {"strategy", "debt", "regulation", "guidance"}
 COST_OBJECTIVE = re.compile(r"\bter\b|coste|comision|gastos")
 INCOME_OBJECTIVE = re.compile(r"renta|ingreso|dividend|cupon")
 
-
-# --------------------------------------------------------------------------- #
 # Helpers
-# --------------------------------------------------------------------------- #
 def _dec(value: Any) -> Decimal:
     return Decimal(str(value))
-
-
+    
 def _money(value: Decimal) -> Decimal:
     return value.quantize(CENT, rounding=ROUND_HALF_UP)
-
-
+    
 def _eur(value: Decimal) -> str:
     """Formato español: 2.250,00 €"""
     s = f"{_money(value):,.2f}"
     return s.replace(",", "X").replace(".", ",").replace("X", ".") + " €"
 
-
 def _normalize(text: Optional[str]) -> str:
     text = unicodedata.normalize("NFKD", (text or "").lower())
     return "".join(c for c in text if not unicodedata.combining(c))
-
 
 def _annual_income(holding: dict, previous_value: Optional[str]) -> Optional[Decimal]:
     """
@@ -59,10 +52,7 @@ def _annual_income(holding: dict, previous_value: Optional[str]) -> Optional[Dec
         return _dec(holding["market_value_eur"]) * number / HUNDRED
     return _dec(holding["quantity"]) * number
 
-
-# --------------------------------------------------------------------------- #
 # Cálculo por tipo de evento
-# --------------------------------------------------------------------------- #
 def _fees_impact(h: dict, delta: Optional[float]) -> tuple[Optional[Decimal], str]:
     if delta is None:
         return None, "El documento no aporta una variación numérica de comisiones."
@@ -75,7 +65,6 @@ def _fees_impact(h: dict, delta: Optional[float]) -> tuple[Optional[Decimal], st
         f"({_eur(exposure)}). {verb} anual estimado por el cambio de {delta:+.2f}% "
         f"en comisiones: {_eur(abs(impact))}."
     )
-
 
 def _dividend_impact(h: dict, event: FinancialEventExtraction) -> tuple[Optional[Decimal], str]:
     income = _annual_income(h, event.previous_value)
@@ -93,10 +82,7 @@ def _dividend_impact(h: dict, event: FinancialEventExtraction) -> tuple[Optional
         f"de {_eur(abs(loss))} al año."
     )
 
-
-# --------------------------------------------------------------------------- #
 # Idoneidad MiFID II
-# --------------------------------------------------------------------------- #
 def _advisor_reasons(
     event: FinancialEventExtraction, h: dict, impact: Optional[Decimal]
 ) -> list[str]:
@@ -124,10 +110,7 @@ def _advisor_reasons(
 
     return reasons
 
-
-# --------------------------------------------------------------------------- #
 # API pública
-# --------------------------------------------------------------------------- #
 def calculate_event_impact(asset_id: str, event: FinancialEventExtraction) -> list[dict]:
     """
     Devuelve una fila por posición (cartera) expuesta al activo, con las columnas de
@@ -168,7 +151,6 @@ def calculate_event_impact(asset_id: str, event: FinancialEventExtraction) -> li
         sum(i["requires_advisor_action"] for i in impacts),
     )
     return impacts
-
 
 def save_event_impacts(event_id: str, impacts: list[dict]) -> None:
     """Persiste en EVENT_IMPACTS (idempotente: reemplaza los impactos previos del evento).
