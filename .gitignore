@@ -9,3 +9,24 @@ __pycache__/
 *.pyc
 venv/
 .venv/
+
+# --- Monitoring Engine (producción): ficheros generados en ejecución ---
+monitoring_produccion/monitor.db*
+monitoring_produccion/logs/
+data/.incoming/
+data/.rechazados/
+data/prueba_salida/
+
+# --- Secretos: NUNCA subir claves de API ---
+.env
+
+# --- Python ---
+__pycache__/
+*.pyc
+.pytest_cache/
+# --- Monitoring Engine (produccion) ---
+monitoring_produccion/monitor.db*
+monitoring_produccion/logs/
+data/.incoming/
+data/.rechazados/
+data/prueba_salida/
