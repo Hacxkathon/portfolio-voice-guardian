@@ -15,8 +15,11 @@ Dos fuentes:
 
 from __future__ import annotations
 
+import json
 import os
+import re
 import sqlite3
+from pathlib import Path
 from datetime import datetime, timedelta
 from dataclasses import dataclass, field
 from typing import Optional
@@ -208,58 +211,82 @@ def demo_snapshot() -> Snapshot:
 
 
 # --------------------------------------------------------------------------
-# Fuente 2: base de datos SQLite real del proyecto
+# Fuente 2: base de datos SQLite real del proyecto (db/guardian.db de Jorge)
 # --------------------------------------------------------------------------
-# AJUSTAR AQUÍ si los nombres de tablas/columnas de Jorge son distintos.
-# Cada consulta debe devolver EXACTAMENTE las columnas con estos alias.
+# Tablas de Jorge (db/database.py): CLIENTS, PORTFOLIOS, ASSETS, HOLDINGS,
+# DOCUMENTS, EVENTS, EVENT_IMPACTS y BRIEFINGS. El pipeline del equipo escribe
+# la alerta en EVENTS, el coste en EVENT_IMPACTS y los dos textos en BRIEFINGS.
 
 SQL = {
+    # Un cliente puede tener varias carteras: se suma su valor total.
     "clients": """
-        SELECT id            AS client_id,
-               nombre        AS name,
-               perfil        AS profile,
-               patrimonio    AS total_eur
-        FROM clientes
+        SELECT c.client_id                         AS client_id,
+               c.name                              AS name,
+               c.knowledge_level                   AS level,
+               c.risk_tolerance                    AS risk,
+               COALESCE(SUM(p.total_value_eur), 0) AS total_eur
+        FROM CLIENTS c
+        LEFT JOIN PORTFOLIOS p ON p.client_id = c.client_id
+        GROUP BY c.client_id
     """,
     "holdings": """
-        SELECT c.cliente_id  AS client_id,
-               f.nombre      AS fund_name,
-               f.isin        AS isin,
-               p.importe     AS amount_eur
-        FROM posiciones p
-        JOIN carteras c ON c.id = p.cartera_id
-        JOIN fondos   f ON f.id = p.fondo_id
+        SELECT p.client_id         AS client_id,
+               a.name              AS fund_name,
+               a.isin              AS isin,
+               h.market_value_eur  AS amount_eur
+        FROM HOLDINGS h
+        JOIN PORTFOLIOS p ON p.portfolio_id = h.portfolio_id
+        JOIN ASSETS a     ON a.asset_id     = h.asset_id
+        ORDER BY h.market_value_eur DESC
     """,
     "alerts": """
-        SELECT id            AS alert_id,
-               fecha         AS detected_at,
-               tipo_evento   AS event_type,
-               fondo_nombre  AS fund_name,
-               isin          AS isin,
-               titulo        AS title,
-               valor_anterior AS old_value,
-               valor_nuevo   AS new_value,
-               pagina        AS page,
-               cita_textual  AS quote,
-               documento     AS document
-        FROM alertas
-        ORDER BY fecha DESC
+        SELECT e.event_id          AS alert_id,
+               e.created_at        AS detected_at,
+               e.event_type        AS event_type,
+               a.name              AS fund_name,
+               a.isin              AS isin,
+               e.title             AS title,
+               e.previous_value    AS previous_value,
+               e.new_value         AS new_value,
+               e.numeric_delta_pct AS delta_pct,
+               e.evidence_json     AS evidence_json,
+               e.is_simulated      AS is_simulated,
+               COALESCE(d.doc_type, 'Documento de la gestora') AS document
+        FROM EVENTS e
+        JOIN ASSETS a         ON a.asset_id = e.asset_id
+        LEFT JOIN DOCUMENTS d ON d.doc_id   = e.new_doc_id
+        ORDER BY e.created_at DESC
     """,
+    # Coste en € (EVENT_IMPACTS) + los dos textos del pipeline (BRIEFINGS).
     "impacts": """
-        SELECT alerta_id     AS alert_id,
-               cliente_id    AS client_id,
-               exposicion    AS exposure_eur,
-               coste_anual   AS annual_cost_eur,
-               resumen_asesor AS advisor_summary,
-               mensaje_cliente AS client_message
-        FROM impactos
+        SELECT i.event_id                                   AS alert_id,
+               i.client_id                                  AS client_id,
+               i.exposure_eur                               AS exposure_eur,
+               COALESCE(i.estimated_annual_impact_eur, 0)   AS annual_cost_eur,
+               COALESCE(b.advisor_technical_summary, i.impact_explanation) AS advisor_summary,
+               COALESCE(b.investor_personalized_script, '') AS client_message
+        FROM EVENT_IMPACTS i
+        LEFT JOIN BRIEFINGS b ON b.event_id = i.event_id AND b.client_id = i.client_id
     """,
 }
 
-PROFILE_LABELS = {
-    "principiante": "Ahorrador principiante · perfil conservador",
-    "profesional": "Inversor profesional",
-}
+# Niveles de Jorge -> tono de voz y etiqueta que muestra la pantalla
+LEVEL_TO_PROFILE = {"BEGINNER": "principiante", "EXPERIENCED": "profesional", "PRIVATE_BANKING": "profesional"}
+LEVEL_LABELS = {"BEGINNER": "Principiante", "EXPERIENCED": "Inversor con experiencia", "PRIVATE_BANKING": "Banca privada"}
+RISK_LABELS = {"CONSERVATIVE": "perfil conservador", "MODERATE": "perfil moderado", "AGGRESSIVE": "perfil agresivo"}
+DOC_LABELS = {"PROSPECTUS": "Folleto del fondo", "KIID": "Documento de datos fundamentales",
+              "EARNINGS_REPORT": "Informe de resultados"}
+
+# Si no se indica ruta y la app está dentro del repo (audio_ui/), se usa db/guardian.db
+REPO_DB = Path(__file__).resolve().parent.parent / "db" / "guardian.db"
+
+
+def _first_number(text: Optional[str]) -> Optional[float]:
+    """'1.20% anual' -> 1.2 ; '1,65 %' -> 1.65 ; None si no hay número."""
+    if not text:
+        return None
+    m = re.search(r"-?\d+(?:[.,]\d+)?", str(text))
+    return float(m.group(0).replace(",", ".")) if m else None
 
 
 def sqlite_snapshot(db_path: str) -> Snapshot:
@@ -267,7 +294,7 @@ def sqlite_snapshot(db_path: str) -> Snapshot:
     if not os.path.exists(db_path):
         raise FileNotFoundError(f"No existe la base de datos: {db_path}")
 
-    con = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+    con = sqlite3.connect(f"file:{Path(db_path).resolve().as_posix()}?mode=ro", uri=True)
     con.row_factory = sqlite3.Row
     try:
         rows = {k: [dict(r) for r in con.execute(q)] for k, q in SQL.items()}
@@ -277,53 +304,60 @@ def sqlite_snapshot(db_path: str) -> Snapshot:
     clients: dict[str, Client] = {}
     for r in rows["clients"]:
         cid = str(r["client_id"])
-        profile = str(r["profile"]).lower()
-        clients[cid] = Client(
-            client_id=cid,
-            name=r["name"],
-            profile=profile,
-            profile_label=PROFILE_LABELS.get(profile, profile.capitalize()),
-            total_eur=float(r["total_eur"]),
-        )
+        level = str(r["level"])
+        label = LEVEL_LABELS.get(level, level.title())
+        if r.get("risk") in RISK_LABELS:
+            label += ", " + RISK_LABELS[r["risk"]]
+        clients[cid] = Client(client_id=cid, name=r["name"], profile=LEVEL_TO_PROFILE.get(level, "principiante"),
+                              profile_label=label, total_eur=float(r["total_eur"]))
     for r in rows["holdings"]:
         cid = str(r["client_id"])
         if cid in clients:
-            clients[cid].holdings.append(
-                Holding(r["fund_name"], r["isin"], float(r["amount_eur"])))
+            clients[cid].holdings.append(Holding(r["fund_name"], r["isin"], float(r["amount_eur"])))
 
-    alerts = [
-        Alert(
+    alerts = []
+    for r in rows["alerts"]:
+        try:
+            ev = (json.loads(r["evidence_json"] or "[]") or [{}])[0]
+        except (ValueError, TypeError):
+            ev = {}
+        old, new = _first_number(r["previous_value"]), _first_number(r["new_value"])
+        if old is None or new is None:            # sin cifras: al menos la variación
+            old, new = 0.0, float(r["delta_pct"] or 0)
+        doc = DOC_LABELS.get(r["document"], r["document"])
+        if ev.get("section"):
+            doc = f"{doc} · {ev['section']}"
+        title = r["title"]
+        if r.get("is_simulated"):
+            title = f"{title} (simulación)"
+        alerts.append(Alert(
             alert_id=str(r["alert_id"]),
-            detected_at=str(r["detected_at"]),
+            detected_at=str(r["detected_at"] or "")[:16],
             event_type=r["event_type"],
             fund_name=r["fund_name"],
             isin=r["isin"],
-            title=r["title"],
-            old_value=float(r["old_value"]),
-            new_value=float(r["new_value"]),
-            evidence=Evidence(int(r["page"]), r["quote"], r["document"]),
-        )
-        for r in rows["alerts"]
-    ]
+            title=title,
+            old_value=old,
+            new_value=new,
+            evidence=Evidence(int(ev.get("page_number") or 0), ev.get("exact_quote") or "(sin cita)", doc),
+        ))
+
     impacts = [
-        Impact(
-            alert_id=str(r["alert_id"]),
-            client_id=str(r["client_id"]),
-            exposure_eur=float(r["exposure_eur"]),
-            annual_cost_eur=float(r["annual_cost_eur"]),
-            advisor_summary=r["advisor_summary"],
-            client_message=r["client_message"],
-        )
+        Impact(alert_id=str(r["alert_id"]), client_id=str(r["client_id"]), exposure_eur=float(r["exposure_eur"]),
+               annual_cost_eur=float(r["annual_cost_eur"]), advisor_summary=r["advisor_summary"],
+               client_message=r["client_message"])
         for r in rows["impacts"]
     ]
     if not alerts:
-        raise ValueError("La base de datos no tiene alertas todavía.")
+        raise ValueError("la base de datos todavía no tiene alertas (falta ejecutar el pipeline)")
 
     return Snapshot(clients, alerts, impacts, source_name=f"SQLite · {os.path.basename(db_path)}")
 
 
 def load_snapshot(db_path: Optional[str]) -> Snapshot:
     """Intenta la base de datos real; si falla, datos de demo + aviso."""
+    if not db_path and REPO_DB.exists():      # dentro del repo del equipo: se conecta solo
+        db_path = str(REPO_DB)
     if db_path:
         try:
             return sqlite_snapshot(db_path)
