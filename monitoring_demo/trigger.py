@@ -3,7 +3,7 @@ import uuid
 from datetime import date
 from typing import TypedDict, Optional
 
-from monitoring.file_scanner import escanear_nuevos_documentos
+from monitoring_demo.file_scanner import escanear_nuevos_documentos
 from pipeline import run_end_to_end_pipeline
 
 class InformacionDocumento(TypedDict):

@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import TypedDict
 
-from monitoring.deduplication import (
+from monitoring_demo.deduplication import (
     calculate_file_hash,
     is_document_processed,
 )
