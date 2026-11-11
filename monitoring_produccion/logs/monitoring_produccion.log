@@ -220,3 +220,24 @@
 2026-11-11 21:24:01,549 | WARNING | __main__ | [OIR] AST_EQ_01: no se encontró el enlace al documento en la página intermedia (intento 1/3) → PENDIENTE_DESCARGA
 2026-11-11 21:24:02,848 | INFO    | __main__ | [HR] AST_FD_01: PDF descargado (149027 bytes) → AST_FD_01_HR_20261111_317632.pdf
 2026-11-11 21:24:03,851 | INFO    | __main__ | Ciclo de descargas → EstadisticasDescarga(procesados=2, descargados=1, rechazados=0, reintentos=1, errores=0)
+2026-11-11 22:07:21,579 | INFO    | __main__ | [HR] AST_FD_01: RECHAZADO: puntos 0 < umbral 3 | reglas: ninguna | isin=no
+2026-11-11 22:07:21,580 | INFO    | __main__ | Ciclo del filtro (dry-run) → EstadisticasFiltro(procesados=1, aprobados=0, rechazados=1, pendientes=0, errores=0)
+2026-11-11 22:07:23,565 | INFO    | monitoring_produccion.rss_monitor | El canal es válido pero no contiene noticias en este momento
+2026-11-11 22:07:23,566 | INFO    | monitoring_produccion.rss_monitor | Canal IIP → EstadisticasFeed(leidos=0, nuevos=0, duplicados=0, antiguos=0, invalidos=0, sin_cruce=0, pendientes=0, descartados_categoria=0, errores=0, error_red=None)
+2026-11-11 22:07:24,607 | INFO    | monitoring_produccion.rss_monitor | Canal OIR → EstadisticasFeed(leidos=19, nuevos=0, duplicados=19, antiguos=0, invalidos=0, sin_cruce=0, pendientes=0, descartados_categoria=0, errores=0, error_red=None)
+2026-11-11 22:07:25,648 | INFO    | monitoring_produccion.rss_monitor | Canal HR → EstadisticasFeed(leidos=12, nuevos=0, duplicados=12, antiguos=0, invalidos=0, sin_cruce=0, pendientes=0, descartados_categoria=0, errores=0, error_red=None)
+2026-11-11 22:07:26,964 | WARNING | monitoring_produccion.downloader | [OIR] AST_EQ_01: no se encontró el enlace al documento en la página intermedia (intento 2/3) → PENDIENTE_DESCARGA
+2026-11-11 22:07:27,966 | INFO    | monitoring_produccion.downloader | Ciclo de descargas → EstadisticasDescarga(procesados=1, descargados=0, rechazados=0, reintentos=1, errores=0)
+2026-11-11 22:07:28,008 | INFO    | monitoring_produccion.heuristic_filter | [HR] AST_FD_01: RECHAZADO: puntos 0 < umbral 3 | reglas: ninguna | isin=no
+2026-11-11 22:07:28,012 | INFO    | monitoring_produccion.heuristic_filter | Ciclo del filtro → EstadisticasFiltro(procesados=1, aprobados=0, rechazados=1, pendientes=0, errores=0)
+2026-11-11 22:25:53,686 | INFO    | monitoring_produccion.rss_monitor | El canal es válido pero no contiene noticias en este momento
+2026-11-11 22:25:53,686 | INFO    | monitoring_produccion.rss_monitor | Canal IIP → EstadisticasFeed(leidos=0, nuevos=0, duplicados=0, antiguos=0, invalidos=0, sin_cruce=0, pendientes=0, descartados_categoria=0, errores=0, error_red=None)
+2026-11-11 22:25:54,749 | INFO    | monitoring_produccion.rss_monitor | [OIR] 'BANCO SANTANDER, S.A.' → AST_EQ_01 (cruce=alias) estado=DESCARTADO_CATEGORIA | Total número de derechos de voto y de capital
+2026-11-11 22:25:54,773 | INFO    | monitoring_produccion.rss_monitor | Canal OIR → EstadisticasFeed(leidos=19, nuevos=19, duplicados=0, antiguos=0, invalidos=0, sin_cruce=18, pendientes=0, descartados_categoria=1, errores=0, error_red=None)
+2026-11-11 22:25:55,853 | INFO    | monitoring_produccion.rss_monitor | [HR] 'KUTXABANK 0/100 CARTERAS, FI' → AST_FD_01 (cruce=alias) estado=PENDIENTE_DESCARGA | Reembolsos/Reducción del capital en circulación de IIC superior al 20%
+2026-11-11 22:25:55,866 | INFO    | monitoring_produccion.rss_monitor | Canal HR → EstadisticasFeed(leidos=12, nuevos=12, duplicados=0, antiguos=0, invalidos=0, sin_cruce=11, pendientes=1, descartados_categoria=0, errores=0, error_red=None)
+2026-11-11 22:25:57,118 | INFO    | monitoring_produccion.downloader | [HR] AST_FD_01: PDF descargado (149027 bytes) → AST_FD_01_HR_20261111_317632.pdf
+2026-11-11 22:25:58,119 | INFO    | monitoring_produccion.downloader | Ciclo de descargas → EstadisticasDescarga(procesados=1, descargados=1, rechazados=0, reintentos=0, errores=0)
+2026-11-11 22:25:58,357 | INFO    | monitoring_produccion.heuristic_filter | [HR] AST_FD_01: APROBADO: puntos 3 >= umbral 3 | reglas: reembolsos_liquidez(+3) | isin=no (eventos: strategy)
+2026-11-11 22:25:58,373 | INFO    | monitoring_produccion.heuristic_filter | [HR] AST_FD_01: PDF aprobado y movido a C:\Users\dchir\OneDrive\Documentos\hackathon_ai_finance\vs code\portfolio-voice-guardian\data\prueba_salida\AST_FD_01_HR_20261111_317632.pdf
+2026-11-11 22:25:58,374 | INFO    | monitoring_produccion.heuristic_filter | Ciclo del filtro → EstadisticasFiltro(procesados=1, aprobados=1, rechazados=0, pendientes=0, errores=0)

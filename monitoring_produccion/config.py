@@ -40,6 +40,9 @@ DIR_DEMO_DOCS: Final[Path] = _ruta_env("PROD_OUTPUT_DIR", RAIZ_PROYECTO / "data"
 DIR_INCOMING: Final[Path] = _ruta_env("PROD_INCOMING_DIR", RAIZ_PROYECTO / "data" / ".incoming")
 RUTA_ALIASES: Final[Path] = DIR_MODULO / "aliases.json"
 DIR_LOGS: Final[Path] = DIR_MODULO / "logs"
+DIR_RECHAZADOS: Final[Path] = _ruta_env("PROD_REJECTED_DIR", RAIZ_PROYECTO / "data" / ".rechazados")
+# Si es True, los PDFs rechazados se archivan en DIR_RECHAZADOS (útil para calibrar); si no, se borran.
+CONSERVAR_RECHAZADOS: Final[bool] = os.getenv("PROD_CONSERVAR_RECHAZADOS", "1") != "0"
 
 # --- Canales RSS de la CNMV --------------------------------------------------
 FEEDS_CNMV: Final[dict[str, str]] = {
