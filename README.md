@@ -1,10 +1,11 @@
-#Portfolio Voice Guardian
+# Portfolio Voice Guardian
 
 > **Supervisión regulatoria continua, cálculo determinista de impacto de costes y generación automatizada de briefings de audio personalizados (MiFID II).**
 
 ---
 
-##Visión del Proyecto
+## Visión del Proyecto
+
 Los cambios en folletos regulados (KIID/PRIIPs) o hechos relevantes suelen tardar semanas en procesarse. Esto genera **sobrecostes imprevistos para los inversores** y **riesgos de incumplimiento sobrevenido de idoneidad (MiFID II)**.
 
 **Portfolio Voice Guardian** es una plataforma que:
@@ -14,7 +15,7 @@ Los cambios en folletos regulados (KIID/PRIIPs) o hechos relevantes suelen tarda
 
 ---
 
-##Arquitectura del Sistema
+## Arquitectura del Sistema
 
 ```text
 [Canal RSS CNMV] ──► [trigger.py] ──► [db/guardian.db]
