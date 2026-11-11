@@ -1,9 +1,8 @@
 import json
 import uuid
-from typing import Dict, Any, List
 from db.database import get_connection, get_holdings_by_asset, get_asset_by_id
-from schemas import FinancialEventExtraction, EvidenceCitation
-
+from impact.engine import calculate_event_impact, save_event_impacts
+from analysis.claude_analyzer import analyze_document_with_claude
 
 def run_end_to_end_pipeline(
     asset_id: str,
@@ -36,34 +35,11 @@ def run_end_to_end_pipeline(
     # ------------------------------------------------------------------
     # PASO A: Mock estructurado idéntico a la respuesta de Claude (Xoan)
     # ------------------------------------------------------------------
-    print("[PIPELINE] 2. Procesando extracción de evento financiero...")
-    extracted_event = FinancialEventExtraction(
-        event_type="fees",
-        materiality="HIGH",
-        title="Incremento extraordinario de comisión fija de gestión (TER) del +0.45%",
-        previous_value="1.20% anual",
-        new_value="1.65% anual",
-        numeric_delta_pct=0.45,
-        financial_implications=(
-            "Incremento recurrente directo del drag de costes del fondo. "
-            "Afecta negativamente al cumplimiento del objetivo de rentabilidad neta esperada."
-        ),
-        mifid_review_suggested=True,
-        limitations_and_uncertainty=(
-            "El folleto no detalla si existen clases institucionales exentas de este incremento."
-        ),
-        evidence=[
-            EvidenceCitation(
-                page_number=4,
-                exact_quote=(
-                    "La comisión fija de gestión del compartimento se modifica "
-                    "del 1,20% al 1,65% anual sobre patrimonio."
-                ),
-                section="Costes y Gastos Corrientes"
-            )
-        ]
+    print("[PIPELINE] 2. Procesando extracción de evento con Claude...")
+    extracted_event = analyze_document_with_claude(
+        new_doc_path=new_doc_text,
+        old_doc_path=old_doc_text
     )
-
     # ------------------------------------------------------------------
     # PASO B: Guardar Evento en SQLite (Jorge)
     # ------------------------------------------------------------------
@@ -97,75 +73,56 @@ def run_end_to_end_pipeline(
     # Cálculo determinista en Python sobre posiciones reales
     # ------------------------------------------------------------------
     print("[PIPELINE] 4. Cruzando con carteras y calculando impacto patrimonial...")
-    exposed_clients = get_holdings_by_asset(asset_id)
-
-    if not exposed_clients:
+    
+    # 1. Usar el motor de Vanesa para calcular el impacto inteligente
+    impact_records_dicts = calculate_event_impact(asset_id, extracted_event)
+    
+    if not impact_records_dicts:
         print("[PIPELINE] Ningún cliente tiene exposición directa a este activo.")
         conn.close()
         return
 
-    impact_records = []
-    for client in exposed_clients:
-        exposure = client["market_value_eur"]
-        weight = client["portfolio_weight_pct"]
-        delta_pct = extracted_event.numeric_delta_pct or 0.0
-        delta_decimal = delta_pct / 100.0
-
-        # Cálculo exacto de sobrecoste anual en euros
-        annual_impact_eur = round(exposure * delta_decimal, 2)
-
-        explanation = (
-            f"Exposición de {exposure:,.2f} € ({weight:.2f}% de la cartera). "
-            f"La subida de {delta_pct:+.2f}% genera un sobrecoste anual estimado de {annual_impact_eur:,.2f} €."
-        )
-
-        cur.execute("""
-            INSERT INTO EVENT_IMPACTS (
-                event_id, client_id, portfolio_id, exposure_eur,
-                exposure_weight_pct, estimated_annual_impact_eur,
-                impact_explanation, requires_advisor_action
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?);
-        """, (
-            event_id,
-            client["client_id"],
-            client["portfolio_id"],
-            exposure,
-            weight,
-            annual_impact_eur,
-            explanation,
-            1 if extracted_event.mifid_review_suggested else 0
-        ))
-        impact_records.append((client, annual_impact_eur))
-
-    conn.commit()
-    print(f"[PIPELINE] 5. {len(impact_records)} clientes impactados calculados y guardados.")
-
+    # 2. Usar la función de Vanesa para guardarlo en base de datos
+    save_event_impacts(event_id, impact_records_dicts)
+    
+    print(f"[PIPELINE] 5. {len(impact_records_dicts)} clientes impactados calculados y guardados por el motor de Vanesa.")
+    
     # ------------------------------------------------------------------
     # PASO D: Generación de Guiones por Perfil (Mariano)
     # ------------------------------------------------------------------
     print("[PIPELINE] 6. Generando briefings adaptados por nivel de conocimiento...")
-    for client, impact_eur in impact_records:
+    
+    # 1. Recuperamos los datos de los clientes desde la BD (para tener sus nombres y niveles)
+    exposed_clients = get_holdings_by_asset(asset_id)
+
+    # 2. Iteramos sobre los impactos calculados por Vanesa en el Paso C
+    for record in impact_records_dicts:
+        # Extraemos el impacto en euros y buscamos los datos completos del cliente
+        impact_eur = record["estimated_annual_impact_eur"]
+        client = next(c for c in exposed_clients if c["client_id"] == record["client_id"])
+
         level = client["knowledge_level"]
         name = client["client_name"]
 
+        # --- FIX: Formateo seguro para evitar que explote si el impacto es None ---
+        impact_texto = f"un coste aproximado de {round(impact_eur)} euros al año" if impact_eur is not None else "implicaciones en el nivel de riesgo, sin coste directo"
+
         if level == "BEGINNER":
             investor_script = (
-                f"Hola {name}. Te informamos de que el fondo {asset['name']} en tu cartera "
-                f"ha actualizado sus gastos de gestión. Esto supondrá un coste aproximado de {impact_eur:.2f} euros al año. "
-                f"Tu inversión sigue funcionando con normalidad, pero tu asesor revisará si conviene mantenerlo "
-                f"o valorar otras alternativas sin comisiones extra."
+                f"Hola {name}. Te informamos de un cambio en el fondo {asset['name']} en tu cartera. "
+                f"Esto supondrá {impact_texto}. "
+                f"Tu inversión sigue funcionando con normalidad, pero tu asesor revisará si conviene mantenerlo."
             )
         else:  # PRIVATE_BANKING o EXPERIENCED
             investor_script = (
-                f"Estimado/a {name}, le notificamos un ajuste de costes en {asset['name']} (ISIN: {asset['isin']}). "
-                f"La gestora ha incrementado la comisión fija en {extracted_event.numeric_delta_pct:.2f} puntos porcentuales. "
-                f"Sobre su posición actual de {client['market_value_eur']:,.2f} €, el arrastre anual estimado asciende a {impact_eur:,.2f} €. "
-                f"Su asesor ha marcado la posición para evaluar la migración a una clase limpia institucional."
+                f"Buenos días, {name}. Le notificamos un ajuste en {asset['name']}. "
+                f"El análisis refleja {impact_texto}. "
+                f"Su asesor ha marcado la posición para evaluar la idoneidad."
             )
 
         advisor_summary = (
-            f"Alerta MiFID II para {name}: incremento de {extracted_event.numeric_delta_pct}% en costes. "
-            f"Arrastre anual de {impact_eur:,.2f} €. Acción sugerida: evaluar idoneidad y rotación."
+            f"Alerta MiFID II para {name}. Impacto: {impact_texto}. "
+            f"Acción sugerida: evaluar idoneidad y rotación."
         )
 
         cur.execute("""
@@ -187,9 +144,10 @@ def run_end_to_end_pipeline(
 
 
 if __name__ == "__main__":
+    # Pasamos las rutas reales de los PDFs de prueba que tenías para el Escenario 3
     run_end_to_end_pipeline(
         asset_id="AST_FD_01",
-        new_doc_text="Modificación de folleto de fondo...",
-        old_doc_text="Folleto anterior...",
+        new_doc_text="data/demo_docs/escenario3_hecho_relevante_v2.pdf",
+        old_doc_text="data/demo_docs/escenario3_folleto_v1.pdf",
         is_simulation=True
     )
