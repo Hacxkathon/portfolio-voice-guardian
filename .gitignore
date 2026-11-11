@@ -1,6 +1,7 @@
 .env
 *.env
 *.db
+!db/guardian.db
 *.sqlite
 audio_ui/audio_cache/
 *.mp3
