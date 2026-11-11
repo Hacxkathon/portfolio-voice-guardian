@@ -60,12 +60,23 @@ PAUSA_ENTRE_PETICIONES_S: Final[float] = 1.0            # cortesía con el servi
 INTERVALO_POLLING_S: Final[int] = _entero_env("PROD_INTERVALO_S", 900)  # ttl del feed = 15 min
 MAX_ANTIGUEDAD_HORAS: Final[int] = _entero_env("PROD_MAX_ANTIGUEDAD_H", 72)
 UMBRAL_FUZZY: Final[float] = 0.90
+# --- Descargas ---------------------------------------------------------------
+MAX_INTENTOS_DESCARGA: Final[int] = 3                 # tras 3 fallos de red pasa a ERROR
+MAX_BYTES_PDF: Final[int] = 50 * 1024 * 1024          # 50 MB: protección ante respuestas absurdas
+MAX_DESCARGAS_POR_CICLO: Final[int] = 20
+
+# --- Filtro heurístico -------------------------------------------------------
+UMBRAL_APROBACION_FILTRO: Final[int] = _entero_env("PROD_UMBRAL_FILTRO", 3)
+MAX_PAGINAS_FILTRO: Final[int] = 40     # páginas leídas como máximo (tus PDFs suelen tener < 20)
+MIN_CHARS_TEXTO: Final[int] = 50        # por debajo se considera PDF sin capa de texto
+MAX_ITEMS_FILTRO: Final[int] = 50
 
 # Categorías conocidas como ruido (sobre texto normalizado: MAYÚSCULAS, sin tildes).
 # Se ampliará con la tabla categorias_vistas tras observar el feed real.
 PATRONES_CATEGORIA_RUIDO: Final[tuple[str, ...]] = (
     r"NUMERO DE ACCIONISTAS Y PATRIMONIO",
     r"PATRIMONIO ALCANZADO",
+    r"TOTAL NUMERO DE DERECHOS DE VOTO",
 )
 
 
@@ -85,3 +96,4 @@ def configurar_logging(nivel: int = logging.INFO) -> None:
     raiz.setLevel(nivel)
     raiz.addHandler(consola)
     raiz.addHandler(fichero)
+    logging.getLogger("urllib3").setLevel(logging.WARNING)

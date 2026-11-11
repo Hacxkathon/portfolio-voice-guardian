@@ -211,3 +211,12 @@
 2026-11-11 20:53:18,210 | DEBUG   | __main__ | [HR] sin cruce: 'SANTANDER OBJETIVO 11 MESES SEP-27, FI' | Otros hechos relevantes | Patrimonio alcanzado por el fondo
 2026-11-11 20:53:18,215 | DEBUG   | __main__ | [HR] sin cruce: 'SANTANDER OBJETIVO TOP EUROPA 4, FI' | Otros hechos relevantes | Patrimonio alcanzado por el fondo
 2026-11-11 20:53:18,216 | INFO    | __main__ | Canal HR → EstadisticasFeed(leidos=12, nuevos=12, duplicados=0, antiguos=0, invalidos=0, sin_cruce=11, pendientes=1, descartados_categoria=0, errores=0, error_red=None)
+2026-11-11 21:23:57,153 | INFO    | __main__ | El canal es válido pero no contiene noticias en este momento
+2026-11-11 21:23:57,154 | INFO    | __main__ | Canal IIP → EstadisticasFeed(leidos=0, nuevos=0, duplicados=0, antiguos=0, invalidos=0, sin_cruce=0, pendientes=0, descartados_categoria=0, errores=0, error_red=None)
+2026-11-11 21:23:58,223 | INFO    | __main__ | [OIR] 'BANCO SANTANDER, S.A.' → AST_EQ_01 (cruce=alias) estado=PENDIENTE_DESCARGA | Total número de derechos de voto y de capital
+2026-11-11 21:23:58,259 | INFO    | __main__ | Canal OIR → EstadisticasFeed(leidos=19, nuevos=19, duplicados=0, antiguos=0, invalidos=0, sin_cruce=18, pendientes=1, descartados_categoria=0, errores=0, error_red=None)
+2026-11-11 21:23:59,309 | INFO    | __main__ | [HR] 'KUTXABANK 0/100 CARTERAS, FI' → AST_FD_01 (cruce=alias) estado=PENDIENTE_DESCARGA | Reembolsos/Reducción del capital en circulación de IIC superior al 20%
+2026-11-11 21:23:59,325 | INFO    | __main__ | Canal HR → EstadisticasFeed(leidos=12, nuevos=12, duplicados=0, antiguos=0, invalidos=0, sin_cruce=11, pendientes=1, descartados_categoria=0, errores=0, error_red=None)
+2026-11-11 21:24:01,549 | WARNING | __main__ | [OIR] AST_EQ_01: no se encontró el enlace al documento en la página intermedia (intento 1/3) → PENDIENTE_DESCARGA
+2026-11-11 21:24:02,848 | INFO    | __main__ | [HR] AST_FD_01: PDF descargado (149027 bytes) → AST_FD_01_HR_20261111_317632.pdf
+2026-11-11 21:24:03,851 | INFO    | __main__ | Ciclo de descargas → EstadisticasDescarga(procesados=2, descargados=1, rechazados=0, reintentos=1, errores=0)
