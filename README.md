@@ -1,7 +1,5 @@
 # Portfolio Voice Guardian
 
-> **Supervisión regulatoria continua, cálculo determinista de impacto de costes y generación automatizada de briefings de audio personalizados (MiFID II).**
-
 ---
 
 ## Visión del Proyecto
