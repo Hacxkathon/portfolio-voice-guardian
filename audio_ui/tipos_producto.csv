@@ -1,0 +1,9 @@
+﻿tipo;identificador;documento_vigilado;donde_se_publica;url_fuente_oficial;que_cambios_vigilar
+Fondo de inversión;ISIN (12 caracteres);Folleto y Documento de Datos Fundamentales (DFI/KID);CNMV (fondos españoles) y gestora;https://www.cnmv.es/portal/consultas/busqueda.aspx;"Comisión de gestión, depositaría y reembolso; cambio de política de inversión; fusión o liquidación del fondo"
+ETF;ISIN (12 caracteres) y ticker por bolsa;Folleto, KID y factsheet del ETF;Gestora del ETF (iShares, Vanguard, Xtrackers…);https://www.justetf.com;TER, índice de referencia, método de réplica, política de dividendos, cierre o fusión
+Acción;ISIN y ticker;"Información privilegiada y Otra información relevante; informes financieros; anuncios de dividendos";CNMV (España) o SEC EDGAR (EEUU);https://www.cnmv.es | https://www.sec.gov/edgar/search/;Dividendos (importe, fechas, recortes), resultados, ampliaciones de capital, OPA, splits y cambios de ISIN
+Criptomoneda;Ticker (BTC, ETH…);"Condiciones y comisiones de la plataforma; registro MiCA";Plataforma y registro de la CNMV;https://www.cnmv.es;Comisiones de compraventa y retirada, licencia MiCA, cese de servicio en España
+Bono o letra;ISIN de cada emisión;Resolución de subasta y condiciones de la emisión;Tesoro Público / emisor;https://www.tesoro.es/deuda-publica;Tipo de interés en nuevas subastas, cupón, vencimiento, calificación del emisor
+Plan de pensiones;Código DGSFP (N####);Documento de datos fundamentales del plan;Gestora y DGSFP;https://www.dgsfp.mineco.es;Comisión de gestión y depósito, política de inversión, movilización
+Depósito o cuenta remunerada;Nombre del producto y entidad;Condiciones del contrato y tabla de remuneración;Entidad;;Tipo de interés (TIN/TAE), saldo máximo remunerado, comisiones de mantenimiento
+Otro;Según producto;Documentación del producto;Emisor;;Condiciones y comisiones
