@@ -1,5 +1,7 @@
 # Portfolio Voice Guardian
 
+Supervisión regulatoria continua, cálculo determinista de impacto de costes y generación automatizada de briefings de audio personalizados (MiFID II).
+
 ---
 
 ## Visión del Proyecto
@@ -15,82 +17,56 @@ Los cambios en folletos regulados (KIID/PRIIPs) o hechos relevantes suelen tarda
 
 ## Arquitectura del Sistema
 
-```text
-[Canal RSS CNMV] ──► [trigger.py / rss_monitor.py] ──► [db/guardian.db & monitor.db]
-                                │
-                                ▼
-                    [downloader.py & heuristic_filter.py]
-                                │
-                                ▼
-                    [analysis/claude_analyzer.py]
-                    (Diferencial V1 vs V2 con LLM)
-                                │
-                                ▼
-                    [engine/impact_engine.py]
-                    (Cálculo determinista de costes)
-                                │
-                                ▼
-                    [audio_ui/app.py]
-                    (Dashboard Streamlit + ElevenLabs)
-```
+    [Canal RSS CNMV] ──► [trigger.py / rss_monitor.py] ──► [db/guardian.db & monitor.db]
+                                    │
+                                    ▼
+                        [downloader.py & heuristic_filter.py]
+                                    │
+                                    ▼
+                        [analysis/claude_analyzer.py]
+                        (Diferencial V1 vs V2 con LLM)
+                                    │
+                                    ▼
+                        [engine/impact_engine.py]
+                        (Cálculo determinista de costes)
+                                    │
+                                    ▼
+                        [audio_ui/app.py]
+                        (Dashboard Streamlit + ElevenLabs)
 
 ---
 
-## Requisitos del Sistema
-* **Python 3.10+**
-* **Dependencias principales:** `requests`, `feedparser`, `beautifulsoup4`, `lxml`, `pymupdf`, `tzdata`, `pytest`
+## Caso de Uso (Demo: Escenario 3)
+
+Detección de una subida de comisión fija de gestión (**+0.45% / 45 bps**) en el fondo *EuroValue Core Equity UCITS* (`LU0998877665`) y cruce automático con carteras reales:
+
+| Inversor | Perfil MiFID | Exposición | Impacto Anual (€/año) | Canal y Tono de Briefing |
+| :--- | :--- | :---: | :---: | :--- |
+| **Laura Gómez** | Conservador / Principiante | 35.000 € | **+157,50 €** | Audio WhatsApp (Didáctico y cercano) |
+| **Martín Vega** *(Patrimonios Ibéricos)* | Moderado / Banca Privada | 500.000 € | **+2.250,00 €** | Portal Web (Técnico e institucional) |
 
 ---
 
-## Instalación y Configuración
+## Monitoring Engine (monitoring_produccion/ y monitoring_demo/)
 
-1. **Clonar el repositorio e instalar dependencias:**
-   ```bash
-   pip install requests feedparser beautifulsoup4 lxml pymupdf tzdata pytest
-   ```
+El Monitoring Engine es la puerta de entrada de Portfolio Voice Guardian: detecta qué comunicados afectan a los activos de las carteras y entrega al motor de IA solo los documentos con posible impacto económico. Existen dos versiones que comparten el mismo punto de encuentro, la carpeta `data/demo_docs/`:
 
-2. **Variables de Entorno (Opcionales):**
-   Puedes configurar las rutas y comportamientos del sistema mediante las siguientes variables de entorno:
-   * `PROD_OUTPUT_DIR`: Carpeta de salida para documentos aprobados (por defecto `data/demo_docs`).
-   * `PROD_INCOMING_DIR`: Carpeta temporal para descargas en curso.
-   * `PROD_REJECTED_DIR`: Carpeta de cuarentena para descartes.
-   * `PROD_CONSERVAR_RECHAZADOS`: `1` para conservar documentos descartados, `0` para eliminación automática.
-   * `GUARDIAN_DB_PATH`: Ruta a la base de datos principal (`guardian.db`, en solo lectura).
-   * `MONITOR_DB_PATH`: Ruta a la base de datos de producción (`monitor.db`).
-   * `PROD_INTERVALO_S`: Intervalo de pausa entre ciclos de escaneo (por defecto `900` segundos).
+| | monitoring_produccion/ | monitoring_demo/ |
+|---|---|---|
+| **Propósito** | Conectar con el mundo real (CNMV) | Demo fiable ante el jurado, sin depender de la red |
+| **Entrada** | Canales RSS oficiales de la CNMV | Un PDF colocado a mano en `data/demo_docs/` |
+| **Ejecución** | Bucle continuo (cada 15 min) | Escaneo bajo demanda: `python -m monitoring_demo.trigger` |
+| **Filtros** | Dedupe + cruce con ASSETS + categoría + heurístico | Dedupe por hash SHA-256 contra DOCUMENTS |
+| **Tokens de IA**| 0 (todo determinista) | 0 |
+| **Salida** | PDFs relevantes en `data/demo_docs/` | Registro en DOCUMENTS + llamada a pipeline |
 
----
-
-## Ejecución y Pruebas
-
-### 1. Pruebas Unitarias y Validación Integrada
-Ejecuta la suite de pruebas sin necesidad de conexión a la red:
-```bash
-python -m pytest monitoring_produccion/tests -q
-```
-
-### 2. Ejecución por Fases (Modo Dry-Run / Individual)
-Puedes probar cada componente del pipeline por separado:
-
-* **Monitor RSS:**
-  ```bash
-  python -m monitoring_produccion.rss_monitor --once --dry-run -v
-  ```
-* **Descargador de documentos:**
-  ```bash
-  python -m monitoring_produccion.downloader --once -v
-  ```
-* **Filtro heurístico:**
-  ```bash
-  python -m monitoring_produccion.heuristic_filter --once --dry-run
-  ```
-* **Prueba individual del filtro heurístico sobre un PDF local:**
-  ```bash
-  python -m monitoring_produccion.heuristic_filter --probar ruta/doc.pdf --texto-completo
-  ```
-
-### 3. Ejecución Completa en Producción
-Para iniciar el ciclo de monitorización y análisis automatizado en bucle continuo:
-```bash
-python -m monitoring_produccion.run_produccion
-```
+```mermaid
+flowchart TD
+    RSS["CNMV · RSS IIP / OIR / HR"] --> M["rss_monitor.py<br/>dedupe · cruce con ASSETS · filtro de categoría"]
+    M -->|PENDIENTE_DESCARGA| D["downloader.py<br/>página intermedia → PDF · SHA-256"]
+    D -->|"DESCARGADO (data/.incoming)"| F["heuristic_filter.py<br/>reglas y puntuación"]
+    F -->|APROBADO| OUT["data/demo_docs/"]
+    F -->|RECHAZADO| Q["data/.rechazados/"]
+    DROP["PDF colocado a mano<br/>(modo demo)"] --> OUT
+    OUT --> T["trigger.py<br/>file_scanner · deduplication · registro en DOCUMENTS"]
+    T --> P["run_end_to_end_pipeline<br/>Claude → motor de impacto → UI/audio"]
