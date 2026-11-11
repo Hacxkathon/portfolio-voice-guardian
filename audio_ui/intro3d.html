@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<!--
+  Intro 3D de la pantalla de bienvenida (Three.js).
+
+  Va dentro de un iframe a pantalla completa, DETRÁS de las tarjetas de Streamlit
+  (pointer-events: none). Como el iframe es del mismo origen que la app, lee el
+  ratón y la posición del logo directamente de la página de Streamlit (window.parent).
+
+  Línea de tiempo (segundos):
+    0.0 - 2.6  la cámara vuela entre folletos 3D; frases de intro
+    1.6 - 2.5  el logo 2D se convierte en un escudo 3D que gira al aparecer
+    2.1 - 3.0  crece el anillo de ondas de voz alrededor del escudo
+    2.85 -     Streamlit muestra el título y las tarjetas (CSS en ui.py)
+
+  Clases que pone en <html> de la página:
+    pvg-intro   la intro está en marcha -> las tarjetas esperan a pvg-reveal
+    pvg-3d      el 3D está listo -> se oculta el logo 2D
+    pvg-skip    sin intro (ya vista, clic para saltar, movimiento reducido o error)
+    pvg-reveal  la intro ha terminado: Streamlit muestra el título y las tarjetas
+-->
+<script>
+  // Se ejecuta al instante (antes de fuentes y de Three.js): las tarjetas de Streamlit esperan a la intro.
+  try {
+    var seen = sessionStorage.getItem('pvg_intro') === '1';
+    var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!seen && !reduced) parent.document.documentElement.classList.add('pvg-intro');
+  } catch (e) {}
+</script>
+<!-- La fuente se carga sin bloquear el script de la intro -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #EEF1EC; font-family: Inter, system-ui, sans-serif; }
+  canvas { display: block; position: fixed; inset: 0; }
+  .vignette { position: fixed; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 42%, rgba(238,241,236,0) 35%, rgba(238,241,236,.82) 100%); }
+  #cap { position: fixed; inset: 0; display: grid; place-items: center; pointer-events: none; }
+  #cap div { position: absolute; max-width: min(940px, 88vw); text-align: center; font-weight: 700; letter-spacing: -.035em;
+    color: #15241F; font-size: clamp(28px, 4.4vw, 60px); line-height: 1.08; opacity: 0; transform: translateY(16px) scale(.98);
+    filter: blur(6px); transition: opacity .4s ease, transform .9s cubic-bezier(.2,.8,.2,1), filter .6s ease;
+    text-shadow: 0 0 28px #EEF1EC, 0 0 56px #EEF1EC, 0 0 90px #EEF1EC; }
+  #cap div.on { opacity: 1; transform: none; filter: none; }
+  #cap em { font-style: normal; color: #2E6B58; }
+  #cap s { text-decoration: none; position: relative; color: #8C9993; }
+  #cap s:after { content: ""; position: absolute; left: -3px; right: -3px; top: 54%; height: .09em; background: #C23B2E;
+    transform: scaleX(0); transform-origin: left; transition: transform .45s cubic-bezier(.6,0,.3,1) .35s; }
+  #cap div.on s:after { transform: scaleX(1); }
+</style>
+</head>
+<body>
+<div class="vignette"></div>
+<div id="cap">
+  <div id="c1">Cada día cambian miles de folletos,<br>comisiones y <s>condiciones</s>.</div>
+  <div id="c2">Nosotros <em>los leemos por ti.</em></div>
+</div>
+<script type="module">
+// ---------------------------------------------------------------- página de Streamlit
+const PARENT = (() => { try { return window.parent?.document ? window.parent : null; } catch { return null; } })();
+const ROOT = PARENT ? PARENT.document.documentElement : null;
+const setCls = (c, on = true) => { try { ROOT?.classList.toggle(c, on); } catch {} };
+
+let seen = false;
+try { seen = sessionStorage.getItem('pvg_intro') === '1'; } catch {}
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let skip = seen || reduced;
+if (skip) { setCls('pvg-skip'); setCls('pvg-reveal'); }
+else setCls('pvg-intro');
+
+// Si la librería 3D tarda demasiado, no hacemos esperar a nadie: tarjetas fuera y 3D sin intro.
+const giveUp = () => { skip = true; setCls('pvg-skip'); setCls('pvg-reveal'); };
+const slowTimer = setTimeout(giveUp, 7000);
+
+let THREE;
+try {
+  THREE = await import('https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js');
+  clearTimeout(slowTimer);
+} catch (e) {
+  clearTimeout(slowTimer);
+  giveUp(); setCls('pvg-3d', false);   // sin internet: bienvenida normal, con el logo 2D
+  throw e;
+}
+
+// ---------------------------------------------------------------- utilidades
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, k) => a + (b - a) * k;
+const outCubic = x => 1 - Math.pow(1 - x, 3);
+const outBack = x => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+function rng(seed) { return () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646; }
+const rand = rng(20261110);
+const W = () => innerWidth, H = () => innerHeight;
+const SMALL = () => W() < 700;
+
+const C = { paper: 0xEEF1EC, ink: 0x15241F, ledger: 0x2E6B58, red: 0xC23B2E, marker: 0xF5DC6A };
+
+// ---------------------------------------------------------------- escena
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(W(), H());
+renderer.setClearColor(C.paper, 1);
+document.body.prepend(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(C.paper, 20, 64);
+
+const FOV = 38, CAMZ = 16, START_Z = 74;
+const camera = new THREE.PerspectiveCamera(FOV, W() / H(), 0.1, 220);
+camera.position.set(0, 0, skip ? CAMZ : START_Z);
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0xd2ddd6, 1.55));
+const sun = new THREE.DirectionalLight(0xffffff, 1.7); sun.position.set(7, 11, 14); scene.add(sun);
+const rim = new THREE.DirectionalLight(0xb8e2cf, 1.1); rim.position.set(-9, -5, -4); scene.add(rim);
+
+// ---------------------------------------------------------------- folletos 3D
+const TITLES = ['Costes y gastos corrientes', 'Política de inversión', 'Política de distribución',
+                'Datos fundamentales', 'Condiciones del servicio', 'Información regulatoria'];
+
+function roundRect(g, x, y, w, h, r) {
+  g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r);
+  g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); g.fill();
+}
+
+function docTexture(i) {
+  const c = document.createElement('canvas'); c.width = 512; c.height = 680;
+  const g = c.getContext('2d'), r = rng(i * 977 + 13);
+  g.fillStyle = '#FFFFFF'; g.fillRect(0, 0, 512, 680);
+  g.fillStyle = '#C23B2E'; g.fillRect(34, 58, 3, 560);
+  g.fillStyle = '#7D8A85'; g.font = 'italic 23px Georgia, serif'; g.fillText(TITLES[i % TITLES.length], 58, 86);
+  g.font = '18px Georgia, serif'; g.fillText('pág. ' + (6 + i * 4), 418, 86);
+  let y = 136;
+  for (let l = 0; l < 16; l++) {
+    if (l === 4 && i % 2 === 0) {                       // la línea corregida: "del 1,20% al 1,65% anual"
+      g.fillStyle = '#F5DC6A'; g.fillRect(54, y - 19, 318, 32);
+      g.font = '23px Georgia, serif'; g.fillStyle = '#2A3833'; g.fillText('del', 60, y + 5);
+      g.fillStyle = '#8C9993'; g.fillText('1,20%', 104, y + 5);
+      g.fillStyle = '#C23B2E'; g.fillRect(100, y - 3, 70, 3.5);
+      g.font = 'bold 23px Georgia, serif'; g.fillText('al 1,65%', 182, y + 5);
+      g.font = '23px Georgia, serif'; g.fillStyle = '#2A3833'; g.fillText('anual', 296, y + 5);
+      g.fillStyle = '#C23B2E'; g.font = '600 14px Inter, sans-serif'; g.fillText('+0,45 puntos', 196, y - 24);
+    } else {
+      const w = (l % 5 === 4) ? 150 + r() * 130 : 320 + r() * 110;
+      g.fillStyle = l < 1 ? '#3C4A45' : '#CBD3CD';
+      roundRect(g, 58, y - 8, w, 12, 6);
+    }
+    y += 31;
+  }
+  g.fillStyle = '#2E6B58'; g.font = '600 18px Inter, sans-serif'; g.fillText('✓ Cita exacta del documento', 58, 640);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  return t;
+}
+const textures = Array.from({ length: 6 }, (_, i) => docTexture(i));
+
+const docGeo = new THREE.PlaneGeometry(1.5, 1.99, 14, 1);
+{ // papel ligeramente curvado
+  const p = docGeo.attributes.position;
+  for (let i = 0; i < p.count; i++) p.setZ(i, -0.11 * Math.pow(p.getX(i) / 0.75, 2));
+  docGeo.computeVertexNormals();
+}
+
+const docsG = new THREE.Group(); scene.add(docsG);
+const docs = [];
+const N_DOCS = SMALL() ? 30 : 52;
+for (let i = 0; i < N_DOCS; i++) {
+  const flight = i < N_DOCS * 0.32;                     // los que la cámara atraviesa al volar
+  let x, y, z;
+  for (let k = 0; k < 40; k++) {
+    x = (rand() * 2 - 1) * 17; y = (rand() * 2 - 1) * 10.5;
+    z = flight ? 18 + rand() * 48 : -46 + rand() * 52;
+    const clearCenter = flight ? (Math.abs(x) > 1.8 || Math.abs(y) > 1.6) : (Math.abs(x) > 3.4 || Math.abs(y) > 2.8 || z < -18);
+    if (clearCenter) break;
+  }
+  const mat = new THREE.MeshStandardMaterial({
+    map: textures[i % textures.length], roughness: 0.82, metalness: 0, side: THREE.DoubleSide,
+    emissive: new THREE.Color(0x6FD0A6), emissiveIntensity: 0,
+  });
+  const m = new THREE.Mesh(docGeo, mat);
+  const s = 0.8 + rand() * 0.7;
+  m.scale.setScalar(s);
+  m.position.set(x, y, z);
+  m.rotation.set((rand() - .5) * 1.1, (rand() - .5) * 1.4, (rand() - .5) * 0.9);
+  m.userData = { vy: 0.12 + rand() * 0.28, spin: new THREE.Vector3((rand() - .5) * .25, (rand() - .5) * .35, (rand() - .5) * .18) };
+  docsG.add(m); docs.push(m);
+}
+
+// polvo (profundidad)
+const dust = (() => {
+  const n = SMALL() ? 600 : 1400, pos = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) { pos[i * 3] = (rand() * 2 - 1) * 26; pos[i * 3 + 1] = (rand() * 2 - 1) * 16; pos[i * 3 + 2] = -50 + rand() * 120; }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const p = new THREE.Points(g, new THREE.PointsMaterial({ color: C.ledger, size: 0.06, transparent: true, opacity: 0.38, depthWrite: false }));
+  scene.add(p); return p;
+})();
+
+// ---------------------------------------------------------------- escudo 3D (el logo)
+const shieldG = new THREE.Group(); scene.add(shieldG);
+const shieldInner = new THREE.Group(); shieldG.add(shieldInner);
+{
+  const P = (x, y) => [x - 12, -(y - 12)];           // coordenadas del SVG del logo -> mundo
+  const s = new THREE.Shape();
+  s.moveTo(...P(12, 2.5)); s.lineTo(...P(4, 5.6)); s.lineTo(...P(4, 11.5));
+  s.bezierCurveTo(...P(4, 16.5), ...P(7.4, 20.1), ...P(12, 21.5));
+  s.bezierCurveTo(...P(16.6, 20.1), ...P(20, 16.5), ...P(20, 11.5));
+  s.lineTo(...P(20, 5.6)); s.lineTo(...P(12, 2.5));
+  const g = new THREE.ExtrudeGeometry(s, { depth: 2.2, bevelEnabled: true, bevelThickness: 0.7, bevelSize: 0.55,
+                                           bevelSegments: 8, curveSegments: 32 });
+  g.translate(0, 0, -1.1);
+  const body = new THREE.Mesh(g, new THREE.MeshPhysicalMaterial({
+    color: C.ink, roughness: 0.3, metalness: 0.2, clearcoat: 1, clearcoatRoughness: 0.12, sheen: 0.4, sheenColor: new THREE.Color(0x2E6B58),
+  }));
+  shieldInner.add(body);
+}
+const shieldBars = [];
+{
+  const mat = new THREE.MeshStandardMaterial({ color: C.paper, emissive: C.paper, emissiveIntensity: 0.45, roughness: 0.4 });
+  // las 4 barras del logo: x (svg) y longitud del trazo
+  for (const [x, len] of [[9, 0.05], [11, 5.2], [13.4, 8], [15.8, 3.2]]) {
+    const m = new THREE.Mesh(new THREE.CapsuleGeometry(0.85, len, 8, 20), mat);
+    m.position.set(x - 12, -0.2, 1.85); m.scale.z = 0.4;
+    m.userData.len = len;
+    shieldInner.add(m); shieldBars.push(m);
+  }
+}
+
+// halo de luz detrás del escudo
+const halo = (() => {
+  const c = document.createElement('canvas'); c.width = c.height = 256;
+  const g = c.getContext('2d'), gr = g.createRadialGradient(128, 128, 0, 128, 128, 128);
+  gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.45, 'rgba(255,255,255,.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = gr; g.fillRect(0, 0, 256, 256);
+  const t = new THREE.CanvasTexture(c);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, depthWrite: false, opacity: 0 }));
+  scene.add(sp); return sp;
+})();
+
+// ---------------------------------------------------------------- anillo de ondas de voz
+const N_BARS = SMALL() ? 72 : 108;
+const ringBars = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1).translate(0, 0.5, 0),
+                                         new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.92 }), N_BARS);
+ringBars.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+scene.add(ringBars);
+const ringLine = new THREE.Mesh(new THREE.RingGeometry(0.985, 1, 160),
+                                new THREE.MeshBasicMaterial({ color: C.ledger, transparent: true, opacity: 0, side: THREE.DoubleSide }));
+scene.add(ringLine);
+
+const TINT = { none: new THREE.Color(0x3F7D69), g: new THREE.Color(C.ledger), p: new THREE.Color(0xC9A227) };
+const tint = TINT.none.clone();
+const tmpM = new THREE.Matrix4(), tmpQ = new THREE.Quaternion(), tmpV = new THREE.Vector3(), tmpS = new THREE.Vector3(), tmpC = new THREE.Color();
+const zAxis = new THREE.Vector3(0, 0, 1);
+const WHITE = new THREE.Color(0xffffff);
+
+// ---------------------------------------------------------------- interacción con la página
+let mx = 0, my = 0, smx = 0, smy = 0, hover = null;
+const listeners = [];
+function on(target, ev, fn, opt) { try { target.addEventListener(ev, fn, opt); listeners.push([target, ev, fn, opt]); } catch {} }
+const doc = PARENT ? PARENT.document : document;
+on(doc, 'mousemove', e => { mx = (e.clientX / W()) * 2 - 1; my = (e.clientY / H()) * 2 - 1; });
+on(doc, 'mouseover', e => {
+  const el = e.target?.closest?.('[class*="st-key-pick_"]');
+  hover = el ? (String(el.className).includes('pick_gestor') ? 'g' : 'p') : null;
+});
+on(doc, 'click', () => { if (T < 2.6) skipNow(); }, true);
+on(doc, 'keydown', e => { if (T < 2.6 && (e.key === 'Escape' || e.key === ' ')) skipNow(); });
+addEventListener('pagehide', () => listeners.forEach(([t, ev, fn, opt]) => { try { t.removeEventListener(ev, fn, opt); } catch {} }));
+
+function skipNow() { if (T < 2.7) T = 2.7; setCls('pvg-skip'); setCls('pvg-reveal'); }
+
+function stage() {
+  try {
+    const el = PARENT.document.querySelector('.pvg-welcome .stage');
+    if (el) { const r = el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, h: r.height }; }
+  } catch {}
+  return { x: W() / 2, y: H() * 0.2, h: 280 };
+}
+
+addEventListener('resize', () => {
+  renderer.setSize(W(), H()); camera.aspect = W() / H(); camera.updateProjectionMatrix();
+});
+
+// ---------------------------------------------------------------- voz sintética (para animar barras)
+function voiceEnv(t) {
+  const phrase = clamp((Math.sin(t * 0.85) + Math.sin(t * 0.37 + 1.3) * 0.6 + 0.35) * 1.6);   // habla / pausa
+  const syllable = 0.5 + 0.5 * Math.sin(t * 10.5 + Math.sin(t * 2.9) * 2.2);
+  return clamp(phrase * (0.3 + 0.7 * syllable));
+}
+
+// ---------------------------------------------------------------- bucle
+const cap1 = document.getElementById('c1'), cap2 = document.getElementById('c2');
+const clock = new THREE.Clock();
+let T = skip ? 3.6 : 0, env = 0, marked3d = false, markedSeen = false, revealed = skip, speed = 1;
+
+function frame() {
+  requestAnimationFrame(frame);
+  const dt = Math.min(clock.getDelta(), 0.05);
+  if (document.hidden) return;
+  T += dt;
+  const t = T;
+
+  // cámara: vuelo de entrada entre los folletos
+  const fl = outCubic(clamp(t / 2.6));
+  camera.position.z = lerp(START_Z, CAMZ, fl);
+  camera.rotation.z = (1 - fl) * 0.22;
+  camera.position.x = (1 - fl) * Math.sin(t * 1.3) * 1.2;
+
+  // frases de la intro
+  if (!skip) {
+    cap1.classList.toggle('on', t > 0.25 && t < 1.42);
+    cap2.classList.toggle('on', t > 1.5 && t < 2.45);
+  } else { cap1.classList.remove('on'); cap2.classList.remove('on'); }
+
+  // posición del logo de la página -> mundo 3D
+  const st = stage(), base = st.h / 280;
+  const wpp = 2 * Math.tan(FOV * Math.PI / 360) * CAMZ / H();          // unidades del mundo por píxel
+  const cx = (st.x - W() / 2) * wpp, cy = -(st.y - H() / 2) * wpp;
+
+  // ratón suavizado y modo al pasar por las tarjetas
+  smx = lerp(smx, mx, 0.06); smy = lerp(smy, my, 0.06);
+  const hoverBias = hover === 'g' ? -0.55 : hover === 'p' ? 0.55 : 0;
+  tint.lerp(TINT[hover || 'none'], 0.06);
+  speed = lerp(speed, hover ? 2.6 : 1, 0.04);
+
+  // escudo
+  const a = clamp((t - 1.6) / 0.9);
+  if (a > 0 && !marked3d) { setCls('pvg-3d'); marked3d = true; }
+  const k = (118 * base * wpp) / 19;                                    // el escudo mide ~118 px de alto
+  shieldG.position.set(cx, cy + Math.sin(t * 1.2) * 2.5 * wpp, 0);
+  shieldG.scale.setScalar(Math.max(0.0001, k * outBack(a)));
+  shieldInner.rotation.y = (1 - outCubic(a)) * Math.PI * 2.2 + Math.sin(t * 0.6) * 0.2 + smx * 0.35 + hoverBias;
+  shieldInner.rotation.x = -smy * 0.2 + Math.sin(t * 0.8) * 0.05;
+  env = lerp(env, voiceEnv(t), 0.25);
+  shieldBars.forEach((b, i) => {
+    const wob = i === 0 ? 0 : (0.16 + 0.1 * Math.sin(t * 9 + i * 1.9)) * env;
+    b.scale.y = 1 + wob * (b.userData.len > 4 ? 0.9 : 1.6);
+  });
+
+  halo.position.set(cx, cy, -1.5);
+  halo.scale.setScalar(330 * base * wpp * (1 + env * 0.08));
+  halo.material.opacity = 0.9 * outCubic(a);
+
+  // anillo de ondas de voz
+  const R = 100 * base * wpp, bw = 3.4 * base * wpp;
+  ringLine.position.set(cx, cy, -0.2);
+  ringLine.scale.setScalar(R - 5 * base * wpp);
+  ringLine.material.opacity = 0.28 * clamp((t - 2.0) / 0.6);
+  for (let i = 0; i < N_BARS; i++) {
+    const ang = (i / N_BARS) * Math.PI * 2 + Math.PI / 2;
+    const grow = outBack(clamp((t - 2.1 - (i / N_BARS) * 0.55) / 0.5));
+    const w = Math.abs(Math.sin(i * 0.55 + t * 4.2) * Math.cos(i * 0.23 - t * 2.7));
+    const lenPx = (5 + 30 * env * (0.25 + 0.75 * w) + 4 * Math.sin(t * 2 + i)) * Math.max(0, grow);
+    tmpV.set(cx + Math.cos(ang) * R, cy + Math.sin(ang) * R, 0);
+    tmpQ.setFromAxisAngle(zAxis, ang - Math.PI / 2);
+    tmpS.set(bw, Math.max(0.0001, lenPx * base * wpp), bw);
+    tmpM.compose(tmpV, tmpQ, tmpS);
+    ringBars.setMatrixAt(i, tmpM);
+    tmpC.copy(tint).lerp(WHITE, 0.12 + 0.35 * (1 - w));
+    if (i % 27 === 0) tmpC.setHex(C.red);                                 // algún "cambio" en rojo
+    ringBars.setColorAt(i, tmpC);
+  }
+  ringBars.instanceMatrix.needsUpdate = true;
+  if (ringBars.instanceColor) ringBars.instanceColor.needsUpdate = true;
+
+  // folletos: deriva, giro y la onda de lectura que los ilumina
+  const scanY = 11.5 - ((t * 3.4) % 27);
+  for (const m of docs) {
+    const u = m.userData;
+    m.position.y += u.vy * dt * speed;
+    if (m.position.y > 11.5) m.position.y = -11.5;
+    m.rotation.x += u.spin.x * dt * speed; m.rotation.y += u.spin.y * dt * speed; m.rotation.z += u.spin.z * dt * speed;
+    m.material.emissiveIntensity = Math.max(0, 1 - Math.abs(m.position.y - scanY) / 1.3) * 0.42;
+  }
+  docsG.rotation.y = lerp(docsG.rotation.y, smx * 0.12 + hoverBias * 0.08, 0.05);
+  docsG.rotation.x = lerp(docsG.rotation.x, smy * 0.07, 0.05);
+  dust.rotation.y += dt * 0.012 * speed;
+  dust.rotation.x = docsG.rotation.x * 0.6;
+
+  if (t > 2.85 && !revealed) { revealed = true; setCls('pvg-reveal'); }
+  if (t > 3.2 && !markedSeen) { markedSeen = true; try { sessionStorage.setItem('pvg_intro', '1'); } catch {} }
+
+  renderer.render(scene, camera);
+}
+frame();
+</script>
+</body>
+</html>

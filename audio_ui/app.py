@@ -16,19 +16,22 @@ la página sigues donde estabas.
 """
 
 from __future__ import annotations
+
 import os
 from datetime import datetime
+
 import streamlit as st
-import store 
+
+import store
 import vista_comun
 import vista_gestor
-import vista_particular 
-import voice 
-from data_source import Sanpshot, load_sanpshot
-from ui import ICON, Ctx, esc, initials inject_css, plural, show, when
+import vista_particular
+import voice
+from data_source import Snapshot, load_snapshot
+from ui import ICON, Ctx, esc, initials, inject_css, plural, show, when
 
-set.set_page_config(page_title="Portfolio Voice Guardian", page_icon= "🛡️", layout="wide"
-                    initial_sidebar_state="collapsed")
+st.set_page_config(page_title="Portfolio Voice Guardian", page_icon="🛡️", layout="wide",
+                   initial_sidebar_state="collapsed")
 inject_css()
 state = st.session_state
 

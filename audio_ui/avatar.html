@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<!--
+  Avatar con IA de Portfolio Voice Guardian.
+
+  - La cara es SVG dibujado aquí (personaje propio). La boca se abre y cambia de
+    forma con la voz: el navegador analiza el audio en tiempo real (volumen y
+    reparto de graves/agudos) con la Web Audio API.
+  - Aviso y preguntas rápidas: MP3 ya generados con ElevenLabs (vienen en CONFIG).
+  - "Pregúntale lo que quieras": agente de ElevenLabs por voz (@elevenlabs/client),
+    con una URL firmada que genera Python (la clave nunca llega aquí).
+
+  avatar.py sustituye CONFIG por los datos reales.
+-->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+  :root { --paper:#EEF1EC; --ink:#15241F; --ink2:#4B5B55; --ink3:#7D8A85; --line:#D5DCD5; --ledger:#2E6B58; --ledgerSoft:#E1EEE8; --red:#C23B2E; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: transparent; }
+  body { font-family: Inter, system-ui, sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased;
+         display: flex; justify-content: center; padding: 2px 2px 14px; }
+  .card { width: 100%; max-width: 380px; background: #fff; border-radius: 24px; overflow: hidden; display: flex; flex-direction: column;
+          box-shadow: 0 1px 0 var(--line), 0 26px 50px -32px rgba(21,36,31,.55); }
+
+  .stage { position: relative; height: 262px; overflow: hidden;
+           background: radial-gradient(circle at 50% 62%, #FAFBF8 0%, #E8EFEA 52%, #D6E3DB 100%); }
+  .stage svg { position: absolute; left: 50%; bottom: -2px; transform: translateX(-50%); width: 262px; height: 262px; }
+  .badge, .state { position: absolute; top: 12px; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px;
+                   background: rgba(255,255,255,.88); backdrop-filter: blur(6px); display: flex; align-items: center; gap: 6px; }
+  .badge { left: 12px; color: var(--ledger); letter-spacing: .02em; }
+  .badge:before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--ledger); }
+  .state { right: 12px; color: var(--ink2); font-weight: 600; }
+  .state i { width: 7px; height: 7px; border-radius: 50%; background: #B5C0BA; }
+  .state.speaking i { background: var(--ledger); animation: pulse 1s infinite; }
+  .state.listening i { background: var(--red); animation: pulse 1.1s infinite; }
+  .state.thinking i { background: #C9A227; animation: pulse .55s infinite; }
+  @keyframes pulse { 50% { transform: scale(1.7); opacity: .45; } }
+  .name { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff;
+          font-size: 12px; font-weight: 600; padding: 6px 13px; border-radius: 999px; white-space: nowrap;
+          box-shadow: 0 8px 18px -10px rgba(0,0,0,.6); }
+  .name small { font-weight: 400; opacity: .7; margin-left: 4px; }
+
+  .sub { height: 96px; overflow-y: auto; padding: 14px 18px 4px; font-size: 14.5px; line-height: 1.5; color: #2A3833; scroll-behavior: smooth; }
+  .sub .w { color: #B9C3BE; transition: color .12s; }
+  .sub .w.past { color: var(--ink); }
+  .sub .w.now { color: var(--ledger); font-weight: 600; }
+  .sub .ph { color: var(--ink3); font-size: 13.5px; }
+  .sub .q { display: block; font-size: 12px; font-weight: 600; color: var(--ink3); margin-bottom: 2px; }
+
+  .controls { padding: 8px 16px 12px; display: flex; flex-direction: column; gap: 9px; }
+  button { font-family: inherit; cursor: pointer; border: 0; }
+  .main { height: 44px; border-radius: 12px; background: var(--ledger); color: #fff; font-weight: 600; font-size: 14.5px;
+          display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform .1s, background .2s; }
+  .main:active { transform: scale(.98); }
+  .main.playing { background: #234F43; }
+  .main svg { width: 15px; height: 15px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { font-size: 12.5px; font-weight: 600; color: var(--ledger); background: var(--ledgerSoft); padding: 7px 11px; border-radius: 999px;
+          transition: background .15s, color .15s; }
+  .chip:hover { background: #D2E6DC; }
+  .chip.on { background: var(--ledger); color: #fff; }
+  .ask { height: 44px; border-radius: 12px; background: #fff; border: 1.5px solid var(--ink); color: var(--ink); font-weight: 600; font-size: 14.5px;
+         display: flex; align-items: center; justify-content: center; gap: 8px; transition: background .15s; }
+  .ask:hover:not(:disabled) { background: #F4F6F2; }
+  .ask.live { border-color: var(--red); color: var(--red); }
+  .ask:disabled { opacity: .45; cursor: not-allowed; }
+  .ask svg { width: 16px; height: 16px; }
+  .why { font-size: 11.5px; line-height: 1.45; color: var(--ink3); text-align: center; }
+  .why:empty { display: none; }
+  .typer { display: none; gap: 6px; }
+  .typer.on { display: flex; }
+  .typer input { flex: 1; height: 38px; border: 1px solid var(--line); border-radius: 10px; padding: 0 12px; font: inherit; font-size: 13.5px; outline: none; }
+  .typer input:focus { border-color: var(--ledger); }
+  .typer button { width: 40px; height: 38px; border-radius: 10px; background: var(--ledger); color: #fff; font-size: 15px; }
+  .mic { display: inline-flex; gap: 2px; align-items: center; height: 16px; }
+  .mic b { width: 3px; height: 4px; border-radius: 2px; background: currentColor; }
+
+  .log { border-top: 1px solid #E7ECE7; padding: 10px 14px 12px; display: flex; flex-direction: column; gap: 6px;
+         max-height: 132px; overflow-y: auto; font-size: 12.5px; scroll-behavior: smooth; }
+  .log:empty { display: none; }
+  .msg { max-width: 88%; padding: 7px 10px; border-radius: 12px; line-height: 1.42; animation: pop .3s ease-out both; }
+  .msg.u { align-self: flex-end; background: var(--ink); color: #fff; border-bottom-right-radius: 4px; }
+  .msg.a { align-self: flex-start; background: #F1F4F0; color: #2A3833; border-bottom-left-radius: 4px; }
+  @keyframes pop { from { opacity: 0; transform: translateY(6px); } }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="stage">
+    <span class="badge">Avatar IA</span>
+    <span class="state" id="st"><i></i><span id="stt">Listo</span></span>
+    <svg viewBox="0 0 300 300" aria-hidden="true">
+      <defs>
+        <radialGradient id="aura" cx="50%" cy="55%" r="50%">
+          <stop offset="0" stop-color="#2E6B58" stop-opacity=".16"/><stop offset="1" stop-color="#2E6B58" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="skin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F6D2B0"/><stop offset="1" stop-color="#EDBE97"/></linearGradient>
+        <linearGradient id="jacket" x1="0" y1="0" x2="0" y2="1"><stop offset="0" id="jk1" stop-color="#2E6B58"/><stop offset="1" id="jk2" stop-color="#1F4D40"/></linearGradient>
+        <clipPath id="mclip"><ellipse id="mcl" cx="150" cy="186" rx="12" ry="1.6"/></clipPath>
+      </defs>
+      <circle id="aur" cx="150" cy="160" r="150" fill="url(#aura)"/>
+      <circle id="r1" cx="150" cy="150" r="112" fill="none" stroke="#2E6B58" stroke-opacity=".22" stroke-width="2"/>
+      <circle id="r2" cx="150" cy="150" r="128" fill="none" stroke="#2E6B58" stroke-opacity=".12" stroke-width="2"/>
+
+      <g id="bodyG">
+        <path d="M150 228 C 98 228 60 248 46 304 L 254 304 C 240 248 202 228 150 228 Z" fill="url(#jacket)"/>
+        <path d="M150 232 L 127 234 L 150 290 L 173 234 Z" fill="#FFFFFF"/>
+        <path d="M150 290 L 127 234 L 110 241 L 139 304 Z" fill="#000" fill-opacity=".14"/>
+        <path d="M150 290 L 173 234 L 190 241 L 161 304 Z" fill="#000" fill-opacity=".14"/>
+        <g transform="translate(193 262) scale(.62)">
+          <path d="M12 2.5 4 5.6v5.9c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V5.6L12 2.5Z" fill="#EEF1EC"/>
+          <path d="M8.2 12.2h1.6M11 9.6v5.2M13.4 8.2v8M15.8 10.6v3.2" stroke="#15241F" stroke-width="1.7" stroke-linecap="round"/>
+        </g>
+      </g>
+      <rect x="133" y="196" width="34" height="42" rx="13" fill="#E2AC85"/>
+
+      <g id="head">
+        <ellipse cx="88" cy="148" rx="10" ry="15" fill="#EBBB93"/>
+        <ellipse cx="212" cy="148" rx="10" ry="15" fill="#EBBB93"/>
+        <ellipse cx="150" cy="142" rx="62" ry="71" fill="url(#skin)"/>
+        <path id="hair" d="M84 150 C 77 94 104 60 150 58 C 199 56 226 92 216 150 C 213 127 205 111 193 103 C 175 113 148 113 126 104 C 112 101 102 108 96 119 C 90 129 87 140 84 150 Z" fill="#15241F"/>
+        <ellipse cx="112" cy="168" rx="11" ry="7" fill="#F09A86" opacity=".32"/>
+        <ellipse cx="188" cy="168" rx="11" ry="7" fill="#F09A86" opacity=".32"/>
+        <g id="brows" stroke="#15241F" stroke-width="5" stroke-linecap="round" fill="none">
+          <path d="M110 117 Q126 109 140 114"/><path d="M160 114 Q174 109 190 117"/>
+        </g>
+        <g id="eyes">
+          <g id="eyeL"><ellipse cx="126" cy="139" rx="9" ry="7.5" fill="#fff"/><circle id="pL" cx="126" cy="139" r="5" fill="#15241F"/><circle id="sL" cx="127.6" cy="137.2" r="1.6" fill="#fff"/></g>
+          <g id="eyeR"><ellipse cx="174" cy="139" rx="9" ry="7.5" fill="#fff"/><circle id="pR" cx="174" cy="139" r="5" fill="#15241F"/><circle id="sR" cx="175.6" cy="137.2" r="1.6" fill="#fff"/></g>
+        </g>
+        <g fill="#fff" fill-opacity=".1" stroke="#15241F" stroke-width="2.4">
+          <circle cx="126" cy="138" r="17"/><circle cx="174" cy="138" r="17"/>
+          <path d="M143 135 Q150 130 157 135" fill="none"/>
+        </g>
+        <path d="M150 143 Q145 160 153 162" stroke="#C98F68" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+        <g id="mouth">
+          <ellipse id="mIn" cx="150" cy="186" rx="12" ry="1.6" fill="#5B2620"/>
+          <g clip-path="url(#mclip)">
+            <rect id="teeth" x="128" y="176" width="44" height="7" rx="2" fill="#FFFFFF"/>
+            <ellipse id="tongue" cx="150" cy="198" rx="12" ry="7" fill="#D9776E"/>
+          </g>
+          <ellipse id="lip" cx="150" cy="186" rx="13.5" ry="3" fill="none" stroke="#B85A4E" stroke-width="2.6"/>
+          <path id="smile" d="M134 184 Q150 195 166 184" stroke="#B85A4E" stroke-width="3" fill="none" stroke-linecap="round"/>
+        </g>
+      </g>
+    </svg>
+    <span class="name" id="nm"></span>
+  </div>
+
+  <div class="sub" id="sub"></div>
+
+  <div class="controls">
+    <button class="main" id="play"></button>
+    <div class="chips" id="chips"></div>
+    <button class="ask" id="ask"></button>
+    <div class="why" id="why"></div>
+    <div class="typer" id="typer"><input id="q" placeholder="O escríbele tu pregunta…" autocomplete="off"><button id="send" aria-label="Enviar">➤</button></div>
+  </div>
+  <div class="log" id="log"></div>
+</div>
+
+<script>
+const CFG = /*__CONFIG__*/null;
+const $ = id => document.getElementById(id);
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, k) => a + (b - a) * k;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+const ICON = {
+  play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4v16l13-8z"/></svg>',
+  pause: '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>',
+  mic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
+};
+
+// ---------------------------------------------------------------- textos y estado
+$('nm').innerHTML = `${esc(CFG.persona)}<small>${esc(CFG.role)}</small>`;
+if (CFG.outfit === 'particular') { $('jk1').setAttribute('stop-color', '#24382F'); $('jk2').setAttribute('stop-color', '#15241F'); }
+function setState(kind, text) { $('st').className = 'state ' + (kind || ''); $('stt').textContent = text; }
+function setPlayLabel(playing) {
+  $('play').classList.toggle('playing', playing);
+  $('play').innerHTML = playing ? `${ICON.pause} Pausar` : `${ICON.play} ${heard ? 'Volver a escuchar el aviso' : 'Escuchar el aviso'}`;
+}
+let heard = false;
+setPlayLabel(false);
+$('sub').innerHTML = `<span class="ph">Pulsa <b>Escuchar el aviso</b> y te lo cuento. Después, pregúntame lo que quieras.</span>`;
+setState('', 'Listo');
+
+function addMsg(kind, text) {
+  const d = document.createElement('div'); d.className = 'msg ' + kind; d.textContent = text;
+  $('log').appendChild(d); $('log').scrollTop = 1e6;
+}
+
+// ---------------------------------------------------------------- subtítulos tipo karaoke
+let words = [], wordEnds = [];
+function setSubtitle(text, question) {
+  const parts = String(text).split(/(\s+)/);
+  let html = question ? `<span class="q">${esc(question)}</span>` : '', total = 0;
+  words = []; wordEnds = [];
+  for (const p of parts) {
+    if (!p.trim()) { html += p; continue; }
+    total += p.length + 1; wordEnds.push(total);
+    html += `<span class="w">${esc(p)}</span>`;
+  }
+  wordEnds = wordEnds.map(e => e / total);
+  $('sub').innerHTML = html; $('sub').scrollTop = 0;
+  words = [...$('sub').querySelectorAll('.w')];
+}
+function paintSubtitle(progress) {
+  let cur = wordEnds.findIndex(e => e >= progress);
+  if (cur < 0) cur = words.length;
+  words.forEach((w, i) => { w.className = 'w' + (i < cur ? ' past' : i === cur ? ' now' : ''); });
+  const now = words[cur];
+  if (now) { const s = $('sub'); if (now.offsetTop - s.offsetTop > s.scrollTop + s.clientHeight - 30) s.scrollTop = now.offsetTop - s.offsetTop - 26; }
+}
+function showAll() { words.forEach(w => (w.className = 'w past')); }
+
+// ---------------------------------------------------------------- audio + análisis (para la boca)
+let actx = null, analyser = null, timeD = null, freqD = null;
+const sources = new Map();
+function ensureCtx() {
+  if (!actx) {
+    actx = new (window.AudioContext || window.webkitAudioContext)();
+    analyser = actx.createAnalyser(); analyser.fftSize = 1024; analyser.smoothingTimeConstant = 0.45;
+    analyser.connect(actx.destination);
+    timeD = new Uint8Array(analyser.fftSize); freqD = new Uint8Array(analyser.frequencyBinCount);
+  }
+  if (actx.state === 'suspended') actx.resume();
+}
+const clips = {};
+function clip(key, src) {
+  if (!clips[key]) { const a = new Audio(src); a.preload = 'auto'; clips[key] = a; }
+  return clips[key];
+}
+let current = null, currentKey = null;
+
+function playClip(key, src, text, question) {
+  if (conv) return;                                         // durante la conversación manda el agente
+  ensureCtx();
+  const a = clip(key, src);
+  if (!sources.has(a)) { const s = actx.createMediaElementSource(a); s.connect(analyser); sources.set(a, s); }
+  if (current && current !== a) { current.pause(); current.currentTime = 0; }
+  if (currentKey !== key) setSubtitle(text, question);
+  current = a; currentKey = key;
+  if (a.ended) a.currentTime = 0;
+  a.onended = () => { showAll(); setState('', 'Listo'); markChip(null); if (key === 'msg') { heard = true; } setPlayLabel(false); current = null; };
+  a.onpause = () => { if (!a.ended) { setState('', 'En pausa'); setPlayLabel(false); } };
+  a.onplay = () => { setState('speaking', 'Hablando'); setPlayLabel(key === 'msg'); };
+  return a.play().catch(() => { setState('', 'Pulsa para escuchar'); });
+}
+function stopClip() { if (current) { current.pause(); current.currentTime = 0; current = null; } markChip(null); setPlayLabel(false); }
+
+$('play').onclick = () => {
+  if (conv) return;
+  if (current && currentKey === 'msg' && !current.paused) { current.pause(); return; }
+  markChip(null);
+  playClip('msg', CFG.message.src, CFG.message.text);
+};
+
+// ---------------------------------------------------------------- preguntas rápidas
+function markChip(i) { [...$('chips').children].forEach((c, j) => c.classList.toggle('on', j === i)); }
+CFG.faqs.forEach((f, i) => {
+  const b = document.createElement('button'); b.className = 'chip'; b.textContent = f.q;
+  b.onclick = () => { if (conv) { conv.sendUserMessage(f.q); addMsg('u', f.q); return; }
+                      markChip(i); playClip('faq' + i, f.src, f.text, f.q); };
+  $('chips').appendChild(b);
+});
+
+// ---------------------------------------------------------------- conversación libre (agente de ElevenLabs)
+let conv = null, clientLoaded = null, usedUrl = false;
+function loadClient() {
+  if (clientLoaded) return clientLoaded;
+  clientLoaded = new Promise((ok, ko) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/@elevenlabs/client@1.31.0/dist/lib.iife.js';
+    s.onload = () => ok(window.ElevenLabsClient); s.onerror = () => ko(new Error('No se pudo cargar el cliente de ElevenLabs'));
+    document.head.appendChild(s);
+  });
+  return clientLoaded;
+}
+function askLabel(live) {
+  $('ask').classList.toggle('live', live);
+  $('ask').innerHTML = live ? `<span class="mic" id="micv"><b></b><b></b><b></b><b></b><b></b></span> Terminar conversación`
+                            : `${ICON.mic} Pregúntale lo que quieras`;
+}
+function renew() {
+  // Pide a Streamlit una URL firmada nueva (pulsa un botón oculto de la página)
+  try {
+    const btn = parent.document.querySelector(`[class*="st-key-avrenew_${CFG.scope}"] button`);
+    if (btn) btn.click();
+  } catch (e) {}
+}
+askLabel(false);
+if (CFG.agent.error) {
+  $('ask').disabled = true;
+  $('why').textContent = CFG.agent.error;
+}
+
+async function startAgent() {
+  stopClip();
+  setState('thinking', 'Conectando…'); $('ask').disabled = true; $('why').textContent = 'Permite el micrófono si el navegador te lo pide.';
+  try {
+    const EL = await loadClient();
+    ensureCtx();
+    conv = await EL.Conversation.startSession({
+      signedUrl: CFG.agent.signedUrl,
+      connectionType: 'websocket',
+      overrides: {
+        agent: { prompt: { prompt: CFG.agent.prompt }, firstMessage: CFG.agent.firstMessage, language: 'es' },
+        tts: { voiceId: CFG.agent.voiceId },
+      },
+      onConnect: () => { usedUrl = true; askLabel(true); $('ask').disabled = false; $('typer').classList.add('on');
+                         $('why').textContent = 'Habla con normalidad. También puedes escribir.'; setState('listening', 'Te escucho'); },
+      onDisconnect: () => { endUI(); },
+      onError: (m) => { $('why').textContent = 'Error del agente: ' + m; },
+      onModeChange: ({ mode }) => mode === 'speaking' ? setState('speaking', 'Hablando') : setState('listening', 'Te escucho'),
+      onMessage: (p) => {
+        const role = p.role || p.source;
+        if (!p.message) return;
+        if (role === 'user') { addMsg('u', p.message); setState('thinking', 'Pensando…'); }
+        else { addMsg('a', p.message); setSubtitle(p.message); showAll(); }
+      },
+    });
+  } catch (e) {
+    conv = null; endUI();
+    $('why').textContent = (e && e.name === 'NotAllowedError')
+      ? 'Sin permiso de micrófono. Actívalo en el candado de la barra de direcciones y vuelve a intentarlo.'
+      : 'No se pudo conectar. Preparando una conexión nueva…';
+    // La URL firmada puede haber caducado: pedimos otra a Streamlit (recarga el avatar)
+    if (!(e && e.name === 'NotAllowedError')) setTimeout(renew, 1200);
+  }
+}
+function endUI() {
+  conv = null; askLabel(false); $('ask').disabled = !!CFG.agent.error; $('typer').classList.remove('on');
+  setState('', 'Listo');
+  if (usedUrl && !$('why').textContent.startsWith('No se pudo') && !$('why').textContent.startsWith('Sin permiso')) $('why').textContent = 'Conversación terminada.';
+}
+$('ask').onclick = async () => {
+  if (conv) { try { await conv.endSession(); } catch (e) {} endUI(); return; }
+  startAgent();
+};
+function sendTyped() {
+  const v = $('q').value.trim(); if (!v || !conv) return;
+  conv.sendUserMessage(v); addMsg('u', v); $('q').value = ''; setState('thinking', 'Pensando…');
+}
+$('send').onclick = sendTyped;
+$('q').addEventListener('keydown', e => { if (e.key === 'Enter') sendTyped(); });
+
+// ---------------------------------------------------------------- animación de la cara
+const NS = n => document.getElementById(n);
+const head = NS('head'), bodyG = NS('bodyG'), eyeL = NS('eyeL'), eyeR = NS('eyeR'), brows = NS('brows');
+const mIn = NS('mIn'), mcl = NS('mcl'), lip = NS('lip'), teeth = NS('teeth'), tongue = NS('tongue'), smile = NS('smile');
+const r1 = NS('r1'), r2 = NS('r2'), aur = NS('aur');
+const pupils = [[NS('pL'), NS('sL'), 126], [NS('pR'), NS('sR'), 174]];
+let open = 0, wide = 0.5, vol = 0, blinkT = 0, nextBlink = 2 + Math.random() * 3, lookX = 0, lookY = 0, mx = 0, my = 0;
+addEventListener('mousemove', e => {
+  const r = document.querySelector('.stage svg').getBoundingClientRect();
+  mx = clamp((e.clientX - (r.left + r.width / 2)) / 160, -1, 1); my = clamp((e.clientY - (r.top + r.height * 0.45)) / 160, -1, 1);
+});
+
+function levels() {
+  // Devuelve [volumen 0..1, "anchura" 0..1 (agudos -> boca ancha, graves -> boca redonda)]
+  if (conv) {
+    try {
+      const v = conv.getOutputVolume ? conv.getOutputVolume() : 0;
+      const f = conv.getOutputByteFrequencyData ? conv.getOutputByteFrequencyData() : null;
+      let w = 0.5;
+      if (f && f.length) {
+        const avg = (a, b) => { let s = 0; for (let i = a; i < b; i++) s += f[i]; return s / Math.max(1, b - a); };
+        const n = f.length, lo = avg(Math.floor(n * .04), Math.floor(n * .14)), hi = avg(Math.floor(n * .25), Math.floor(n * .5));
+        w = clamp(hi / (lo + 1) * 1.6);
+      }
+      return [clamp(v * 1.8), w];
+    } catch (e) { return [0, .5]; }
+  }
+  if (!analyser || !current || current.paused) return [0, .5];
+  analyser.getByteTimeDomainData(timeD); analyser.getByteFrequencyData(freqD);
+  let s = 0; for (let i = 0; i < timeD.length; i++) { const d = (timeD[i] - 128) / 128; s += d * d; }
+  const rms = Math.sqrt(s / timeD.length);
+  const bw = actx.sampleRate / analyser.fftSize;
+  const band = (f0, f1) => { let t = 0, n = 0; for (let i = Math.floor(f0 / bw); i < Math.ceil(f1 / bw); i++) { t += freqD[i]; n++; } return t / Math.max(1, n); };
+  return [clamp(rms * 3.4), clamp(band(1900, 4200) / (band(250, 1000) + 1) * 1.9)];
+}
+
+let last = performance.now(), T = 0;
+function frame(now) {
+  requestAnimationFrame(frame);
+  const dt = Math.min(0.05, (now - last) / 1000); last = now; T += dt;
+  const [v, w] = levels();
+  vol = lerp(vol, v, v > vol ? 0.55 : 0.18);
+  open = lerp(open, clamp((vol - 0.04) * 1.35), vol > open ? 0.6 : 0.28);
+  wide = lerp(wide, w, 0.2);
+
+  // karaoke del clip
+  if (current && !current.paused && current.duration) paintSubtitle(current.currentTime / current.duration);
+
+  // boca
+  const ry = Math.max(1.6, open * 15.5), rx = 10.5 + wide * 6.5 - open * 2.2;
+  for (const el of [mIn, mcl]) { el.setAttribute('rx', rx.toFixed(2)); el.setAttribute('ry', ry.toFixed(2)); }
+  lip.setAttribute('rx', (rx + 1.6).toFixed(2)); lip.setAttribute('ry', (ry + 1.5).toFixed(2));
+  lip.setAttribute('stroke-opacity', clamp(open * 6).toFixed(2));
+  mIn.setAttribute('fill-opacity', clamp(open * 8).toFixed(2));
+  smile.setAttribute('opacity', (1 - clamp(open * 5)).toFixed(2));
+  teeth.setAttribute('y', (186 - ry - 0.5).toFixed(2));
+  tongue.setAttribute('cy', (186 + ry * 0.75).toFixed(2));
+
+  // ojos: parpadeo + mirada
+  blinkT += dt;
+  let lid = 1;
+  if (blinkT > nextBlink) { const k = (blinkT - nextBlink) / 0.16; lid = k < 1 ? Math.abs(1 - 2 * k) : 1; if (k >= 1) { blinkT = 0; nextBlink = 2.2 + Math.random() * 3.5; } }
+  for (const [g, cx] of [[eyeL, 126], [eyeR, 174]]) g.setAttribute('transform', `translate(0 139) scale(1 ${Math.max(.08, lid).toFixed(3)}) translate(0 -139)`);
+  const listening = $('st').classList.contains('listening');
+  lookX = lerp(lookX, listening ? 0 : mx * 3, 0.08); lookY = lerp(lookY, listening ? 0.6 : my * 2.2, 0.08);
+  for (const [p, s, cx] of pupils) { p.setAttribute('cx', (cx + lookX).toFixed(2)); p.setAttribute('cy', (139 + lookY).toFixed(2));
+                                     s.setAttribute('cx', (cx + 1.6 + lookX).toFixed(2)); s.setAttribute('cy', (137.2 + lookY).toFixed(2)); }
+
+  // cejas: suben al enfatizar y al escuchar
+  const browY = -vol * 4 - (listening ? 3 : 0) + Math.sin(T * 0.7) * 0.4;
+  brows.setAttribute('transform', `translate(0 ${browY.toFixed(2)})`);
+
+  // cabeza: respiración, inclinación al hablar y un poco hacia el ratón
+  const tilt = Math.sin(T * 1.1) * 1.6 + vol * 4 * Math.sin(T * 6.5) + mx * 2.5 + (listening ? 3 : 0);
+  const bob = Math.sin(T * 1.9) * 1.3 - vol * 2.2;
+  head.setAttribute('transform', `translate(0 ${bob.toFixed(2)}) rotate(${tilt.toFixed(2)} 150 215)`);
+  bodyG.setAttribute('transform', `translate(0 ${(Math.sin(T * 1.9 - 0.4) * 0.8).toFixed(2)})`);
+
+  // anillos de voz
+  const sc = 1 + vol * 0.12;
+  r1.setAttribute('r', (112 * sc).toFixed(1)); r1.setAttribute('stroke-opacity', (0.16 + vol * 0.5).toFixed(2));
+  r2.setAttribute('r', (128 * (1 + vol * 0.2)).toFixed(1)); r2.setAttribute('stroke-opacity', (0.08 + vol * 0.3).toFixed(2));
+  aur.setAttribute('r', (150 + vol * 30).toFixed(1));
+
+  // nivel del micrófono en el botón
+  const micv = document.getElementById('micv');
+  if (micv && conv && conv.getInputVolume) { const iv = clamp(conv.getInputVolume() * 2.5); [...micv.children].forEach((b, i) => b.style.height = (4 + iv * 12 * (0.5 + 0.5 * Math.sin(T * 14 + i))) + 'px'); }
+}
+requestAnimationFrame(frame);
+
+// ---------------------------------------------------------------- altura automática del iframe
+// (el avatar crece cuando aparece la conversación; así no queda hueco en la página)
+function fitFrame() {
+  try {
+    const f = window.frameElement; if (!f) return;
+    const h = Math.ceil(document.body.scrollHeight + 2) + 'px';
+    f.style.height = h;
+    // Streamlit envuelve el iframe en cajas con altura fija: las ajustamos para que
+    // los botones de debajo bajen con el avatar en vez de quedar encima.
+    let el = f.parentElement;
+    for (let i = 0; el && i < 4; i++, el = el.parentElement) {
+      if (el.style && el.style.height) el.style.height = h;
+      if (el.matches && el.matches('[data-testid="stElementContainer"]')) { el.style.height = 'auto'; el.style.minHeight = h; break; }
+    }
+  } catch (e) {}
+}
+new ResizeObserver(fitFrame).observe(document.body);
+fitFrame();
+
+// ---------------------------------------------------------------- autoarranque
+if (CFG.autoplay) setTimeout(() => $('play').click(), 450);
+</script>
+</body>
+</html>
