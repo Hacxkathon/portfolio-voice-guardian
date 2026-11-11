@@ -25,6 +25,15 @@ def obtener_ruta_documento_anterior(
     return None
 
 
+def obtener_id_documento_anterior(db_path: str, asset_id: str) -> Optional[str]:
+    """doc_id del documento más reciente de ese activo (antes de registrar el nuevo)."""
+    with sqlite3.connect(db_path) as con:
+        fila = con.execute(
+            "SELECT doc_id FROM DOCUMENTS WHERE asset_id = ? ORDER BY created_at DESC LIMIT 1",
+            (asset_id,)).fetchone()
+    return fila[0] if fila else None
+
+
 def registrar_documento(
     db_path: str,
     doc_info: InformacionDocumento
@@ -58,7 +67,7 @@ def registrar_documento(
             (
                 nuevo_id,
                 doc_info["asset_id"],
-                "Desconocido",
+                "PROSPECTUS",
                 "NUEVA_VERSION",
                 fecha_publicacion,
                 doc_info["content_hash"],
@@ -106,18 +115,19 @@ def ejecutar_trigger(
             try:
                 # Recuperar la versión anterior si existiera
                 old_doc_path = obtener_ruta_documento_anterior(db_path, doc_info["asset_id"])
+                old_doc_id = obtener_id_documento_anterior(db_path, doc_info["asset_id"])
 
                 # Registrar formalmente en SQLite
-                registrar_documento(db_path, doc_info)
+                new_doc_id = registrar_documento(db_path, doc_info)
 
                 # Activar el pipeline de IA
                 run_end_to_end_pipeline(
                     asset_id=doc_info["asset_id"],
-                    # Nota: Por ahora pasamos las rutas en lugar del texto crudo,
-                    # Xoan extraerá el texto de los PDFs por dentro.
                     new_doc_text=doc_info["file_path"],
-                    old_doc_text=old_doc_path if old_doc_path else "",
-                    is_simulation=False # 
+                    old_doc_text=old_doc_path,          # None si no hay versión anterior
+                    is_simulation=False,
+                    new_doc_id=new_doc_id,
+                    old_doc_id=old_doc_id,
                 )
 
             except (RuntimeError, OSError) as error:
