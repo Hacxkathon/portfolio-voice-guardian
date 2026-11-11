@@ -1,0 +1,20 @@
+[theme]
+base = "light"
+primaryColor = "#2E6B58"
+backgroundColor = "#EEF1EC"
+secondaryBackgroundColor = "#F6F8F4"
+textColor = "#15241F"
+borderColor = "#D5DCD5"
+font = "Inter:https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+baseRadius = "10px"
+buttonRadius = "12px"
+greenColor = "#2E6B58"
+redColor = "#C23B2E"
+
+[client]
+toolbarMode = "minimal"
+
+[server]
+headless = true
+# Recarga la app sola al guardar cambios en el código (el aviso "Rerun" está oculto por el CSS)
+runOnSave = true
