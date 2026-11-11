@@ -37,7 +37,7 @@ def analyze_document_with_claude(new_doc_path: str, old_doc_path: str | None = N
     new_text_pages = extract_text_from_pdf(new_doc_path)
     
     # 2. Lógica condicional del Prompt según la arquitectura de Denisa
-    if old_doc_path is not None:
+    if old_doc_path:
         old_text_pages = extract_text_from_pdf(old_doc_path)
         base_prompt = "Compara el documento A con el B y dime qué ha cambiado."
         user_content = f"Documento A (Antiguo):\n{old_text_pages}\n\nDocumento B (Nuevo):\n{new_text_pages}"
