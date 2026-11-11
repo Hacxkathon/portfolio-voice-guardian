@@ -322,13 +322,16 @@ html, body, .stApp {background:var(--paper) !important;}
 .pvg-h2{font-size:21px;letter-spacing:-.3px;font-weight:650;margin:14px 0 4px;color:var(--ink)}
 .pvg-h2sub{color:var(--ink-2);font-size:14.5px;margin-bottom:8px}
 .st-key-clientlist{gap:2px !important}
-.pvg-item{display:grid;grid-template-columns:42px 1fr auto;gap:12px;align-items:center;padding:14px;border-radius:12px;transition:background .15s}
+.pvg-item{display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:12px;align-items:center;padding:14px;border-radius:12px;transition:background .15s}
 .pvg-item.sel{background:var(--sheet);box-shadow:inset 3px 0 0 var(--redline), 0 1px 0 var(--line)}
 .pvg-item .ini{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-weight:600;background:#D9E3DD;color:var(--ink)}
-.pvg-item .nm{display:block;font-weight:600;line-height:1.25;color:var(--ink)}
+.pvg-item .nm{display:block;font-weight:600;line-height:1.25;color:var(--ink);overflow-wrap:anywhere}
 .pvg-item .pf{display:block;font-size:13px;color:var(--ink-3);line-height:1.45}
 .pvg-item .amt{text-align:right;font-weight:650;color:var(--redline);white-space:nowrap}
 .pvg-item .amt small{display:block;font-weight:500;font-size:12px;color:var(--ink-3)}
+/* Columna de clientes estrecha: el importe pasa debajo del nombre en vez de salirse de la tarjeta */
+.st-key-clientlist{container-type:inline-size}
+@container (max-width:360px){.pvg-item{grid-template-columns:42px minmax(0,1fr)}.pvg-item .amt{grid-column:2;text-align:left}.pvg-item .amt small{display:inline;margin-left:5px}}
 .pvg-chip{white-space:nowrap;display:inline-flex;align-items:center;gap:5px;margin-top:6px;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px}
 .pvg-chip.wait{background:#FBF1CC;color:#7A5B00}
 .pvg-chip.ok{background:var(--ledger-soft);color:var(--ledger)}
