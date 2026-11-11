@@ -4,31 +4,13 @@ from datetime import date
 from typing import TypedDict, Optional
 
 from monitoring.file_scanner import escanear_nuevos_documentos
-
+from pipeline import run_end_to_end_pipeline
 
 class InformacionDocumento(TypedDict):
     """Estructura con la información de un documento nuevo."""
     file_path: str
     asset_id: str
     content_hash: str
-
-
-def run_end_to_end_pipeline_mock(
-    asset_id: str,
-    new_doc_path: str,
-    old_doc_path: Optional[str] = None
-) -> None:
-    """
-    Simula la ejecución del pipeline de análisis de IA de Xoan.
-    """
-    print(f"\n[🚀 PIPELINE IA ACTIVADO]")
-    print(f" ├─ Activo analizado: {asset_id}")
-    print(f" ├─ Nuevo documento: {new_doc_path}")
-    if old_doc_path:
-        print(f" ├─ Documento anterior: {old_doc_path}")
-    else:
-        print(f" ├─ Documento anterior: No aplica / No disponible")
-    print(f" └─ Estado: ¡Simulación completada con éxito!\n")
 
 
 def obtener_ruta_documento_anterior(
@@ -129,10 +111,13 @@ def ejecutar_trigger(
                 registrar_documento(db_path, doc_info)
 
                 # Activar el pipeline de IA
-                run_end_to_end_pipeline_mock(
+                run_end_to_end_pipeline(
                     asset_id=doc_info["asset_id"],
-                    new_doc_path=doc_info["file_path"],
-                    old_doc_path=old_doc_path
+                    # Nota: Por ahora pasamos las rutas en lugar del texto crudo,
+                    # Xoan extraerá el texto de los PDFs por dentro.
+                    new_doc_text=doc_info["file_path"],
+                    old_doc_text=old_doc_path if old_doc_path else "",
+                    is_simulation=False # 
                 )
 
             except (RuntimeError, OSError) as error:
