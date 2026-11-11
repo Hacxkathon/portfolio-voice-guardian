@@ -1,0 +1,213 @@
+2026-11-11 17:29:11,285 | WARNING | __main__ | aliases.json: asset_id desconocido 'AST_EQ_02' (ignorado)
+2026-11-11 17:29:11,286 | WARNING | __main__ | aliases.json: asset_id desconocido 'AST_EQ_03' (ignorado)
+2026-11-11 17:29:11,818 | ERROR   | __main__ | Canal IIP: fallo de red: 403 Client Error: Forbidden for url: https://www.cnmv.es/portal/Error?errorcode=CVFE
+2026-11-11 17:29:12,873 | ERROR   | __main__ | Canal OIR: fallo de red: 403 Client Error: Forbidden for url: https://www.cnmv.es/portal/Error?errorcode=CVFE
+2026-11-11 17:29:13,945 | ERROR   | __main__ | Canal HR: fallo de red: 403 Client Error: Forbidden for url: https://www.cnmv.es/portal/Error?errorcode=CVFE
+2026-11-11 20:10:16,106 | WARNING | __main__ | aliases.json: asset_id desconocido 'AST_EQ_02' (ignorado)
+2026-11-11 20:10:16,108 | WARNING | __main__ | aliases.json: asset_id desconocido 'AST_EQ_03' (ignorado)
+2026-11-11 20:10:16,723 | WARNING | __main__ | feedparser no devolvió entradas válidas; usando el parser de respaldo (lxml)
+2026-11-11 20:10:16,728 | ERROR   | __main__ | Contenido sin entradas reconocibles. Inicio de la respuesta: b'<?xml version="1.0" encoding="utf-8"?>\r\n<rss xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" version="2.0">\r\n  <Channel>\r\n    <title>CNMV - Informaci'
+2026-11-11 20:10:16,728 | INFO    | __main__ | Canal IIP → EstadisticasFeed(leidos=0, nuevos=0, duplicados=0, antiguos=0, invalidos=0, sin_cruce=0, pendientes=0, descartados_categoria=0, errores=0, error_red=None)
+2026-11-11 20:10:17,793 | INFO    | __main__ | Canal OIR → EstadisticasFeed(leidos=19, nuevos=19, duplicados=0, antiguos=0, invalidos=0, sin_cruce=19, pendientes=0, descartados_categoria=0, errores=0, error_red=None)
+2026-11-11 20:10:18,852 | INFO    | __main__ | Canal HR → EstadisticasFeed(leidos=12, nuevos=12, duplicados=0, antiguos=0, invalidos=0, sin_cruce=12, pendientes=0, descartados_categoria=0, errores=0, error_red=None)
+2026-11-11 20:34:11,102 | WARNING | __main__ | aliases.json: asset_id desconocido 'AST_EQ_02' (ignorado)
+2026-11-11 20:34:11,103 | WARNING | __main__ | aliases.json: asset_id desconocido 'AST_EQ_03' (ignorado)
+2026-11-11 20:34:11,106 | DEBUG   | urllib3.connectionpool | Starting new HTTPS connection (1): www.cnmv.es:443
+2026-11-11 20:34:11,405 | DEBUG   | urllib3.connectionpool | https://www.cnmv.es:443 "GET /portal/informacion-privilegiada/RSS.asmx/GetNoticiasCNMV HTTP/1.1" 200 None
+2026-11-11 20:34:11,423 | INFO    | __main__ | El canal es válido pero no contiene noticias en este momento
+2026-11-11 20:34:11,434 | INFO    | __main__ | Canal IIP → EstadisticasFeed(leidos=0, nuevos=0, duplicados=0, antiguos=0, invalidos=0, sin_cruce=0, pendientes=0, descartados_categoria=0, errores=0, error_red=None)
+2026-11-11 20:34:12,503 | DEBUG   | urllib3.connectionpool | https://www.cnmv.es:443 "GET /portal/Otra-Informacion-Relevante/RSS.asmx/GetNoticiasCNMV HTTP/1.1" 200 None
+2026-11-11 20:34:12,514 | DEBUG   | __main__ | [OIR] sin cruce: 'ACS, ACTIVIDADES DE CONSTRUCCION Y SERVICIOS, S.A.' | sin categoría
+2026-11-11 20:34:12,516 | DEBUG   | __main__ | [OIR] sin cruce: 'ACS, ACTIVIDADES DE CONSTRUCCION Y SERVICIOS, S.A.' | sin categoría
+2026-11-11 20:34:12,518 | DEBUG   | __main__ | [OIR] sin cruce: 'ACS, ACTIVIDADES DE CONSTRUCCION Y SERVICIOS, S.A.' | sin categoría
+2026-11-11 20:34:12,520 | DEBUG   | __main__ | [OIR] sin cruce: 'REPSOL, S.A.' | sin categoría
+2026-11-11 20:34:12,521 | DEBUG   | __main__ | [OIR] sin cruce: 'MFE-MEDIAFOREUROPE N.V.' | sin categoría
+2026-11-11 20:34:12,523 | DEBUG   | __main__ | [OIR] sin cruce: 'BANCO SANTANDER, S.A.' | sin categoría
+2026-11-11 20:34:12,525 | DEBUG   | __main__ | [OIR] sin cruce: 'PROMOTORA DE INFORMACIONES, S.A.' | sin categoría
+2026-11-11 20:34:12,527 | DEBUG   | __main__ | [OIR] sin cruce: 'VIDRALA, S.A.' | sin categoría
+2026-11-11 20:34:12,528 | DEBUG   | __main__ | [OIR] sin cruce: 'DIGI SPAIN TELECOM, S.A.' | sin categoría
+2026-11-11 20:34:12,531 | DEBUG   | __main__ | [OIR] sin cruce: 'DIGI SPAIN TELECOM, S.A.' | sin categoría
+2026-11-11 20:34:12,532 | DEBUG   | __main__ | [OIR] sin cruce: 'CELLNEX FINANCE COMPANY, S.A.U' | sin categoría
+2026-11-11 20:34:12,534 | DEBUG   | __main__ | [OIR] sin cruce: 'CELLNEX TELECOM, S.A.' | sin categoría
+2026-11-11 20:34:12,536 | DEBUG   | __main__ | [OIR] sin cruce: 'BANCO BILBAO VIZCAYA ARGENTARIA, S.A.' | sin categoría
+2026-11-11 20:34:12,537 | DEBUG   | __main__ | [OIR] sin cruce: 'NUEVA EXPRESIÓN TEXTIL, S.A' | sin categoría
+2026-11-11 20:34:12,539 | DEBUG   | __main__ | [OIR] sin cruce: 'VOCENTO, S.A.' | sin categoría
+2026-11-11 20:34:12,540 | DEBUG   | __main__ | [OIR] sin cruce: 'VOCENTO, S.A.' | sin categoría
+2026-11-11 20:34:12,541 | DEBUG   | __main__ | [OIR] sin cruce: 'VOCENTO, S.A.' | sin categoría
+2026-11-11 20:34:12,542 | DEBUG   | __main__ | [OIR] sin cruce: 'CONSTRUCCIONES Y AUXILIAR DE FERROCARRILES, S.A' | sin categoría
+2026-11-11 20:34:12,543 | DEBUG   | __main__ | [OIR] sin cruce: 'ORYZON GENOMICS, S.A.' | sin categoría
+2026-11-11 20:34:12,544 | INFO    | __main__ | Canal OIR → EstadisticasFeed(leidos=19, nuevos=19, duplicados=0, antiguos=0, invalidos=0, sin_cruce=19, pendientes=0, descartados_categoria=0, errores=0, error_red=None)
+2026-11-11 20:34:13,583 | DEBUG   | urllib3.connectionpool | https://www.cnmv.es:443 "GET /portal/hr/hechosrelevantes.asmx/GetNoticiasCNMV HTTP/1.1" 200 None
+2026-11-11 20:34:13,592 | DEBUG   | __main__ | [HR] sin cruce: 'JPMORGAN FUNDS' | Número de accionistas y patrimonio de IIC extranjeras
+2026-11-11 20:34:13,593 | DEBUG   | __main__ | [HR] sin cruce: 'RENTA 4 MEGATENDENCIAS, FI' | Reembolsos/Reducción del capital en circulación de IIC superior al 20%
+2026-11-11 20:34:13,594 | DEBUG   | __main__ | [HR] sin cruce: 'BLACKROCK STRATEGIC FUNDS' | Número de accionistas y patrimonio de IIC extranjeras
+2026-11-11 20:34:13,595 | DEBUG   | __main__ | [HR] sin cruce: 'INVESCO FUNDS' | Número de accionistas y patrimonio de IIC extranjeras
+2026-11-11 20:34:13,596 | DEBUG   | __main__ | [HR] sin cruce: 'KUTXABANK 0/100 CARTERAS, FI' | Reembolsos/Reducción del capital en circulación de IIC superior al 20%
+2026-11-11 20:34:13,597 | DEBUG   | __main__ | [HR] sin cruce: 'NOMURA FUNDS IRELAND PLC' | Número de accionistas y patrimonio de IIC extranjeras
+2026-11-11 20:34:13,600 | DEBUG   | __main__ | [HR] sin cruce: 'WELLINGTON MANAGEMENT FUNDS (IRELAND) PLC' | Número de accionistas y patrimonio de IIC extranjeras
+2026-11-11 20:34:13,601 | DEBUG   | __main__ | [HR] sin cruce: 'GOLDMAN SACHS FUNDS II, SICAV' | Número de accionistas y patrimonio de IIC extranjeras
+2026-11-11 20:34:13,602 | DEBUG   | __main__ | [HR] sin cruce: 'MIRABAUD' | Número de accionistas y patrimonio de IIC extranjeras
+2026-11-11 20:34:13,604 | DEBUG   | __main__ | [HR] sin cruce: 'WELLINGTON MANAGEMENT FUNDS (LUXEMBOURG) III SICAV' | Número de accionistas y patrimonio de IIC extranjeras
+2026-11-11 20:34:13,605 | DEBUG   | __main__ | [HR] sin cruce: 'SANTANDER OBJETIVO 11 MESES SEP-27, FI' | Otros hechos relevantes
+2026-11-11 20:34:13,606 | DEBUG   | __main__ | [HR] sin cruce: 'SANTANDER OBJETIVO TOP EUROPA 4, FI' | Otros hechos relevantes
+2026-11-11 20:34:13,607 | INFO    | __main__ | Canal HR → EstadisticasFeed(leidos=12, nuevos=12, duplicados=0, antiguos=0, invalidos=0, sin_cruce=12, pendientes=0, descartados_categoria=0, errores=0, error_red=None)
+2026-11-11 20:35:18,547 | WARNING | __main__ | aliases.json: asset_id desconocido 'AST_EQ_02' (ignorado)
+2026-11-11 20:35:18,548 | WARNING | __main__ | aliases.json: asset_id desconocido 'AST_EQ_03' (ignorado)
+2026-11-11 20:35:18,550 | DEBUG   | urllib3.connectionpool | Starting new HTTPS connection (1): www.cnmv.es:443
+2026-11-11 20:35:19,021 | DEBUG   | urllib3.connectionpool | https://www.cnmv.es:443 "GET /portal/informacion-privilegiada/RSS.asmx/GetNoticiasCNMV HTTP/1.1" 200 None
+2026-11-11 20:35:19,033 | INFO    | __main__ | El canal es válido pero no contiene noticias en este momento
+2026-11-11 20:35:19,041 | INFO    | __main__ | Canal IIP → EstadisticasFeed(leidos=0, nuevos=0, duplicados=0, antiguos=0, invalidos=0, sin_cruce=0, pendientes=0, descartados_categoria=0, errores=0, error_red=None)
+2026-11-11 20:35:20,073 | DEBUG   | urllib3.connectionpool | https://www.cnmv.es:443 "GET /portal/Otra-Informacion-Relevante/RSS.asmx/GetNoticiasCNMV HTTP/1.1" 200 None
+2026-11-11 20:35:20,084 | DEBUG   | __main__ | [OIR] sin cruce: 'ACS, ACTIVIDADES DE CONSTRUCCION Y SERVICIOS, S.A.' | sin categoría
+2026-11-11 20:35:20,085 | DEBUG   | __main__ | [OIR] sin cruce: 'ACS, ACTIVIDADES DE CONSTRUCCION Y SERVICIOS, S.A.' | sin categoría
+2026-11-11 20:35:20,087 | DEBUG   | __main__ | [OIR] sin cruce: 'ACS, ACTIVIDADES DE CONSTRUCCION Y SERVICIOS, S.A.' | sin categoría
+2026-11-11 20:35:20,088 | DEBUG   | __main__ | [OIR] sin cruce: 'REPSOL, S.A.' | sin categoría
+2026-11-11 20:35:20,089 | DEBUG   | __main__ | [OIR] sin cruce: 'MFE-MEDIAFOREUROPE N.V.' | sin categoría
+2026-11-11 20:35:20,090 | DEBUG   | __main__ | [OIR] sin cruce: 'BANCO SANTANDER, S.A.' | sin categoría
+2026-11-11 20:35:20,091 | DEBUG   | __main__ | [OIR] sin cruce: 'PROMOTORA DE INFORMACIONES, S.A.' | sin categoría
+2026-11-11 20:35:20,094 | DEBUG   | __main__ | [OIR] sin cruce: 'VIDRALA, S.A.' | sin categoría
+2026-11-11 20:35:20,096 | DEBUG   | __main__ | [OIR] sin cruce: 'DIGI SPAIN TELECOM, S.A.' | sin categoría
+2026-11-11 20:35:20,097 | DEBUG   | __main__ | [OIR] sin cruce: 'DIGI SPAIN TELECOM, S.A.' | sin categoría
+2026-11-11 20:35:20,098 | DEBUG   | __main__ | [OIR] sin cruce: 'CELLNEX FINANCE COMPANY, S.A.U' | sin categoría
+2026-11-11 20:35:20,100 | DEBUG   | __main__ | [OIR] sin cruce: 'CELLNEX TELECOM, S.A.' | sin categoría
+2026-11-11 20:35:20,101 | DEBUG   | __main__ | [OIR] sin cruce: 'BANCO BILBAO VIZCAYA ARGENTARIA, S.A.' | sin categoría
+2026-11-11 20:35:20,103 | DEBUG   | __main__ | [OIR] sin cruce: 'NUEVA EXPRESIÓN TEXTIL, S.A' | sin categoría
+2026-11-11 20:35:20,104 | DEBUG   | __main__ | [OIR] sin cruce: 'VOCENTO, S.A.' | sin categoría
+2026-11-11 20:35:20,105 | DEBUG   | __main__ | [OIR] sin cruce: 'VOCENTO, S.A.' | sin categoría
+2026-11-11 20:35:20,106 | DEBUG   | __main__ | [OIR] sin cruce: 'VOCENTO, S.A.' | sin categoría
+2026-11-11 20:35:20,108 | DEBUG   | __main__ | [OIR] sin cruce: 'CONSTRUCCIONES Y AUXILIAR DE FERROCARRILES, S.A' | sin categoría
+2026-11-11 20:35:20,110 | DEBUG   | __main__ | [OIR] sin cruce: 'ORYZON GENOMICS, S.A.' | sin categoría
+2026-11-11 20:35:20,110 | INFO    | __main__ | Canal OIR → EstadisticasFeed(leidos=19, nuevos=19, duplicados=0, antiguos=0, invalidos=0, sin_cruce=19, pendientes=0, descartados_categoria=0, errores=0, error_red=None)
+2026-11-11 20:35:21,158 | DEBUG   | urllib3.connectionpool | https://www.cnmv.es:443 "GET /portal/hr/hechosrelevantes.asmx/GetNoticiasCNMV HTTP/1.1" 200 None
+2026-11-11 20:35:21,179 | DEBUG   | __main__ | [HR] sin cruce: 'JPMORGAN FUNDS' | Número de accionistas y patrimonio de IIC extranjeras
+2026-11-11 20:35:21,183 | DEBUG   | __main__ | [HR] sin cruce: 'RENTA 4 MEGATENDENCIAS, FI' | Reembolsos/Reducción del capital en circulación de IIC superior al 20%
+2026-11-11 20:35:21,185 | DEBUG   | __main__ | [HR] sin cruce: 'BLACKROCK STRATEGIC FUNDS' | Número de accionistas y patrimonio de IIC extranjeras
+2026-11-11 20:35:21,188 | DEBUG   | __main__ | [HR] sin cruce: 'INVESCO FUNDS' | Número de accionistas y patrimonio de IIC extranjeras
+2026-11-11 20:35:21,189 | DEBUG   | __main__ | [HR] sin cruce: 'KUTXABANK 0/100 CARTERAS, FI' | Reembolsos/Reducción del capital en circulación de IIC superior al 20%
+2026-11-11 20:35:21,190 | DEBUG   | __main__ | [HR] sin cruce: 'NOMURA FUNDS IRELAND PLC' | Número de accionistas y patrimonio de IIC extranjeras
+2026-11-11 20:35:21,199 | DEBUG   | __main__ | [HR] sin cruce: 'WELLINGTON MANAGEMENT FUNDS (IRELAND) PLC' | Número de accionistas y patrimonio de IIC extranjeras
+2026-11-11 20:35:21,200 | DEBUG   | __main__ | [HR] sin cruce: 'GOLDMAN SACHS FUNDS II, SICAV' | Número de accionistas y patrimonio de IIC extranjeras
+2026-11-11 20:35:21,200 | DEBUG   | __main__ | [HR] sin cruce: 'MIRABAUD' | Número de accionistas y patrimonio de IIC extranjeras
+2026-11-11 20:35:21,201 | DEBUG   | __main__ | [HR] sin cruce: 'WELLINGTON MANAGEMENT FUNDS (LUXEMBOURG) III SICAV' | Número de accionistas y patrimonio de IIC extranjeras
+2026-11-11 20:35:21,201 | DEBUG   | __main__ | [HR] sin cruce: 'SANTANDER OBJETIVO 11 MESES SEP-27, FI' | Otros hechos relevantes
+2026-11-11 20:35:21,202 | DEBUG   | __main__ | [HR] sin cruce: 'SANTANDER OBJETIVO TOP EUROPA 4, FI' | Otros hechos relevantes
+2026-11-11 20:35:21,202 | INFO    | __main__ | Canal HR → EstadisticasFeed(leidos=12, nuevos=12, duplicados=0, antiguos=0, invalidos=0, sin_cruce=12, pendientes=0, descartados_categoria=0, errores=0, error_red=None)
+2026-11-11 20:37:59,713 | WARNING | __main__ | aliases.json: asset_id desconocido 'AST_EQ_02' (ignorado)
+2026-11-11 20:37:59,713 | WARNING | __main__ | aliases.json: asset_id desconocido 'AST_EQ_03' (ignorado)
+2026-11-11 20:37:59,717 | DEBUG   | urllib3.connectionpool | Starting new HTTPS connection (1): www.cnmv.es:443
+2026-11-11 20:38:00,191 | DEBUG   | urllib3.connectionpool | https://www.cnmv.es:443 "GET /portal/informacion-privilegiada/RSS.asmx/GetNoticiasCNMV HTTP/1.1" 200 None
+2026-11-11 20:38:00,200 | INFO    | __main__ | El canal es válido pero no contiene noticias en este momento
+2026-11-11 20:38:00,209 | INFO    | __main__ | Canal IIP → EstadisticasFeed(leidos=0, nuevos=0, duplicados=0, antiguos=0, invalidos=0, sin_cruce=0, pendientes=0, descartados_categoria=0, errores=0, error_red=None)
+2026-11-11 20:38:01,244 | DEBUG   | urllib3.connectionpool | https://www.cnmv.es:443 "GET /portal/Otra-Informacion-Relevante/RSS.asmx/GetNoticiasCNMV HTTP/1.1" 200 None
+2026-11-11 20:38:01,253 | DEBUG   | __main__ | [OIR] sin cruce: 'ACS, ACTIVIDADES DE CONSTRUCCION Y SERVICIOS, S.A.' | sin categoría
+2026-11-11 20:38:01,254 | DEBUG   | __main__ | [OIR] sin cruce: 'ACS, ACTIVIDADES DE CONSTRUCCION Y SERVICIOS, S.A.' | sin categoría
+2026-11-11 20:38:01,255 | DEBUG   | __main__ | [OIR] sin cruce: 'ACS, ACTIVIDADES DE CONSTRUCCION Y SERVICIOS, S.A.' | sin categoría
+2026-11-11 20:38:01,256 | DEBUG   | __main__ | [OIR] sin cruce: 'REPSOL, S.A.' | sin categoría
+2026-11-11 20:38:01,257 | DEBUG   | __main__ | [OIR] sin cruce: 'MFE-MEDIAFOREUROPE N.V.' | sin categoría
+2026-11-11 20:38:01,258 | DEBUG   | __main__ | [OIR] sin cruce: 'BANCO SANTANDER, S.A.' | sin categoría
+2026-11-11 20:38:01,258 | DEBUG   | __main__ | [OIR] sin cruce: 'PROMOTORA DE INFORMACIONES, S.A.' | sin categoría
+2026-11-11 20:38:01,259 | DEBUG   | __main__ | [OIR] sin cruce: 'VIDRALA, S.A.' | sin categoría
+2026-11-11 20:38:01,260 | DEBUG   | __main__ | [OIR] sin cruce: 'DIGI SPAIN TELECOM, S.A.' | sin categoría
+2026-11-11 20:38:01,261 | DEBUG   | __main__ | [OIR] sin cruce: 'DIGI SPAIN TELECOM, S.A.' | sin categoría
+2026-11-11 20:38:01,262 | DEBUG   | __main__ | [OIR] sin cruce: 'CELLNEX FINANCE COMPANY, S.A.U' | sin categoría
+2026-11-11 20:38:01,263 | DEBUG   | __main__ | [OIR] sin cruce: 'CELLNEX TELECOM, S.A.' | sin categoría
+2026-11-11 20:38:01,263 | DEBUG   | __main__ | [OIR] sin cruce: 'BANCO BILBAO VIZCAYA ARGENTARIA, S.A.' | sin categoría
+2026-11-11 20:38:01,264 | DEBUG   | __main__ | [OIR] sin cruce: 'NUEVA EXPRESIÓN TEXTIL, S.A' | sin categoría
+2026-11-11 20:38:01,265 | DEBUG   | __main__ | [OIR] sin cruce: 'VOCENTO, S.A.' | sin categoría
+2026-11-11 20:38:01,266 | DEBUG   | __main__ | [OIR] sin cruce: 'VOCENTO, S.A.' | sin categoría
+2026-11-11 20:38:01,266 | DEBUG   | __main__ | [OIR] sin cruce: 'VOCENTO, S.A.' | sin categoría
+2026-11-11 20:38:01,267 | DEBUG   | __main__ | [OIR] sin cruce: 'CONSTRUCCIONES Y AUXILIAR DE FERROCARRILES, S.A' | sin categoría
+2026-11-11 20:38:01,268 | DEBUG   | __main__ | [OIR] sin cruce: 'ORYZON GENOMICS, S.A.' | sin categoría
+2026-11-11 20:38:01,268 | INFO    | __main__ | Canal OIR → EstadisticasFeed(leidos=19, nuevos=19, duplicados=0, antiguos=0, invalidos=0, sin_cruce=19, pendientes=0, descartados_categoria=0, errores=0, error_red=None)
+2026-11-11 20:38:02,314 | DEBUG   | urllib3.connectionpool | https://www.cnmv.es:443 "GET /portal/hr/hechosrelevantes.asmx/GetNoticiasCNMV HTTP/1.1" 200 None
+2026-11-11 20:38:02,339 | DEBUG   | __main__ | [HR] sin cruce: 'JPMORGAN FUNDS' | Número de accionistas y patrimonio de IIC extranjeras
+2026-11-11 20:38:02,343 | DEBUG   | __main__ | [HR] sin cruce: 'RENTA 4 MEGATENDENCIAS, FI' | Reembolsos/Reducción del capital en circulación de IIC superior al 20%
+2026-11-11 20:38:02,344 | DEBUG   | __main__ | [HR] sin cruce: 'BLACKROCK STRATEGIC FUNDS' | Número de accionistas y patrimonio de IIC extranjeras
+2026-11-11 20:38:02,346 | DEBUG   | __main__ | [HR] sin cruce: 'INVESCO FUNDS' | Número de accionistas y patrimonio de IIC extranjeras
+2026-11-11 20:38:02,346 | DEBUG   | __main__ | [HR] sin cruce: 'KUTXABANK 0/100 CARTERAS, FI' | Reembolsos/Reducción del capital en circulación de IIC superior al 20%
+2026-11-11 20:38:02,348 | DEBUG   | __main__ | [HR] sin cruce: 'NOMURA FUNDS IRELAND PLC' | Número de accionistas y patrimonio de IIC extranjeras
+2026-11-11 20:38:02,353 | DEBUG   | __main__ | [HR] sin cruce: 'WELLINGTON MANAGEMENT FUNDS (IRELAND) PLC' | Número de accionistas y patrimonio de IIC extranjeras
+2026-11-11 20:38:02,358 | DEBUG   | __main__ | [HR] sin cruce: 'GOLDMAN SACHS FUNDS II, SICAV' | Número de accionistas y patrimonio de IIC extranjeras
+2026-11-11 20:38:02,360 | DEBUG   | __main__ | [HR] sin cruce: 'MIRABAUD' | Número de accionistas y patrimonio de IIC extranjeras
+2026-11-11 20:38:02,361 | DEBUG   | __main__ | [HR] sin cruce: 'WELLINGTON MANAGEMENT FUNDS (LUXEMBOURG) III SICAV' | Número de accionistas y patrimonio de IIC extranjeras
+2026-11-11 20:38:02,361 | DEBUG   | __main__ | [HR] sin cruce: 'SANTANDER OBJETIVO 11 MESES SEP-27, FI' | Otros hechos relevantes
+2026-11-11 20:38:02,362 | DEBUG   | __main__ | [HR] sin cruce: 'SANTANDER OBJETIVO TOP EUROPA 4, FI' | Otros hechos relevantes
+2026-11-11 20:38:02,362 | INFO    | __main__ | Canal HR → EstadisticasFeed(leidos=12, nuevos=12, duplicados=0, antiguos=0, invalidos=0, sin_cruce=12, pendientes=0, descartados_categoria=0, errores=0, error_red=None)
+2026-11-11 20:41:27,532 | DEBUG   | urllib3.connectionpool | Starting new HTTPS connection (1): www.cnmv.es:443
+2026-11-11 20:41:27,851 | DEBUG   | urllib3.connectionpool | https://www.cnmv.es:443 "GET /portal/informacion-privilegiada/RSS.asmx/GetNoticiasCNMV HTTP/1.1" 200 None
+2026-11-11 20:41:27,860 | INFO    | __main__ | El canal es válido pero no contiene noticias en este momento
+2026-11-11 20:41:27,888 | INFO    | __main__ | Canal IIP → EstadisticasFeed(leidos=0, nuevos=0, duplicados=0, antiguos=0, invalidos=0, sin_cruce=0, pendientes=0, descartados_categoria=0, errores=0, error_red=None)
+2026-11-11 20:41:28,929 | DEBUG   | urllib3.connectionpool | https://www.cnmv.es:443 "GET /portal/Otra-Informacion-Relevante/RSS.asmx/GetNoticiasCNMV HTTP/1.1" 200 None
+2026-11-11 20:41:28,939 | DEBUG   | __main__ | [OIR] sin cruce: 'ACS, ACTIVIDADES DE CONSTRUCCION Y SERVICIOS, S.A.' | sin categoría
+2026-11-11 20:41:28,941 | DEBUG   | __main__ | [OIR] sin cruce: 'ACS, ACTIVIDADES DE CONSTRUCCION Y SERVICIOS, S.A.' | sin categoría
+2026-11-11 20:41:28,942 | DEBUG   | __main__ | [OIR] sin cruce: 'ACS, ACTIVIDADES DE CONSTRUCCION Y SERVICIOS, S.A.' | sin categoría
+2026-11-11 20:41:28,943 | DEBUG   | __main__ | [OIR] sin cruce: 'REPSOL, S.A.' | sin categoría
+2026-11-11 20:41:28,944 | DEBUG   | __main__ | [OIR] sin cruce: 'MFE-MEDIAFOREUROPE N.V.' | sin categoría
+2026-11-11 20:41:28,945 | INFO    | __main__ | [OIR] 'BANCO SANTANDER, S.A.' → AST_EQ_01 (cruce=alias) estado=PENDIENTE_DESCARGA | sin categoría
+2026-11-11 20:41:28,948 | DEBUG   | __main__ | [OIR] sin cruce: 'PROMOTORA DE INFORMACIONES, S.A.' | sin categoría
+2026-11-11 20:41:28,951 | DEBUG   | __main__ | [OIR] sin cruce: 'VIDRALA, S.A.' | sin categoría
+2026-11-11 20:41:28,952 | DEBUG   | __main__ | [OIR] sin cruce: 'DIGI SPAIN TELECOM, S.A.' | sin categoría
+2026-11-11 20:41:28,954 | DEBUG   | __main__ | [OIR] sin cruce: 'DIGI SPAIN TELECOM, S.A.' | sin categoría
+2026-11-11 20:41:28,956 | DEBUG   | __main__ | [OIR] sin cruce: 'CELLNEX FINANCE COMPANY, S.A.U' | sin categoría
+2026-11-11 20:41:28,956 | DEBUG   | __main__ | [OIR] sin cruce: 'CELLNEX TELECOM, S.A.' | sin categoría
+2026-11-11 20:41:28,958 | DEBUG   | __main__ | [OIR] sin cruce: 'BANCO BILBAO VIZCAYA ARGENTARIA, S.A.' | sin categoría
+2026-11-11 20:41:28,959 | DEBUG   | __main__ | [OIR] sin cruce: 'NUEVA EXPRESIÓN TEXTIL, S.A' | sin categoría
+2026-11-11 20:41:28,960 | DEBUG   | __main__ | [OIR] sin cruce: 'VOCENTO, S.A.' | sin categoría
+2026-11-11 20:41:28,961 | DEBUG   | __main__ | [OIR] sin cruce: 'VOCENTO, S.A.' | sin categoría
+2026-11-11 20:41:28,963 | DEBUG   | __main__ | [OIR] sin cruce: 'VOCENTO, S.A.' | sin categoría
+2026-11-11 20:41:28,965 | DEBUG   | __main__ | [OIR] sin cruce: 'CONSTRUCCIONES Y AUXILIAR DE FERROCARRILES, S.A' | sin categoría
+2026-11-11 20:41:28,966 | DEBUG   | __main__ | [OIR] sin cruce: 'ORYZON GENOMICS, S.A.' | sin categoría
+2026-11-11 20:41:28,966 | INFO    | __main__ | Canal OIR → EstadisticasFeed(leidos=19, nuevos=19, duplicados=0, antiguos=0, invalidos=0, sin_cruce=18, pendientes=1, descartados_categoria=0, errores=0, error_red=None)
+2026-11-11 20:41:30,058 | DEBUG   | urllib3.connectionpool | https://www.cnmv.es:443 "GET /portal/hr/hechosrelevantes.asmx/GetNoticiasCNMV HTTP/1.1" 200 None
+2026-11-11 20:41:30,076 | DEBUG   | __main__ | [HR] sin cruce: 'JPMORGAN FUNDS' | Número de accionistas y patrimonio de IIC extranjeras
+2026-11-11 20:41:30,078 | DEBUG   | __main__ | [HR] sin cruce: 'RENTA 4 MEGATENDENCIAS, FI' | Reembolsos/Reducción del capital en circulación de IIC superior al 20%
+2026-11-11 20:41:30,085 | DEBUG   | __main__ | [HR] sin cruce: 'BLACKROCK STRATEGIC FUNDS' | Número de accionistas y patrimonio de IIC extranjeras
+2026-11-11 20:41:30,086 | DEBUG   | __main__ | [HR] sin cruce: 'INVESCO FUNDS' | Número de accionistas y patrimonio de IIC extranjeras
+2026-11-11 20:41:30,087 | INFO    | __main__ | [HR] 'KUTXABANK 0/100 CARTERAS, FI' → AST_FD_01 (cruce=alias) estado=PENDIENTE_DESCARGA | Reembolsos/Reducción del capital en circulación de IIC superior al 20%
+2026-11-11 20:41:30,088 | DEBUG   | __main__ | [HR] sin cruce: 'NOMURA FUNDS IRELAND PLC' | Número de accionistas y patrimonio de IIC extranjeras
+2026-11-11 20:41:30,088 | DEBUG   | __main__ | [HR] sin cruce: 'WELLINGTON MANAGEMENT FUNDS (IRELAND) PLC' | Número de accionistas y patrimonio de IIC extranjeras
+2026-11-11 20:41:30,090 | DEBUG   | __main__ | [HR] sin cruce: 'GOLDMAN SACHS FUNDS II, SICAV' | Número de accionistas y patrimonio de IIC extranjeras
+2026-11-11 20:41:30,090 | DEBUG   | __main__ | [HR] sin cruce: 'MIRABAUD' | Número de accionistas y patrimonio de IIC extranjeras
+2026-11-11 20:41:30,091 | DEBUG   | __main__ | [HR] sin cruce: 'WELLINGTON MANAGEMENT FUNDS (LUXEMBOURG) III SICAV' | Número de accionistas y patrimonio de IIC extranjeras
+2026-11-11 20:41:30,093 | DEBUG   | __main__ | [HR] sin cruce: 'SANTANDER OBJETIVO 11 MESES SEP-27, FI' | Otros hechos relevantes
+2026-11-11 20:41:30,093 | DEBUG   | __main__ | [HR] sin cruce: 'SANTANDER OBJETIVO TOP EUROPA 4, FI' | Otros hechos relevantes
+2026-11-11 20:41:30,094 | INFO    | __main__ | Canal HR → EstadisticasFeed(leidos=12, nuevos=12, duplicados=0, antiguos=0, invalidos=0, sin_cruce=11, pendientes=1, descartados_categoria=0, errores=0, error_red=None)
+2026-11-11 20:53:15,605 | DEBUG   | urllib3.connectionpool | Starting new HTTPS connection (1): www.cnmv.es:443
+2026-11-11 20:53:16,061 | DEBUG   | urllib3.connectionpool | https://www.cnmv.es:443 "GET /portal/informacion-privilegiada/RSS.asmx/GetNoticiasCNMV HTTP/1.1" 200 None
+2026-11-11 20:53:16,076 | INFO    | __main__ | El canal es válido pero no contiene noticias en este momento
+2026-11-11 20:53:16,077 | INFO    | __main__ | Canal IIP → EstadisticasFeed(leidos=0, nuevos=0, duplicados=0, antiguos=0, invalidos=0, sin_cruce=0, pendientes=0, descartados_categoria=0, errores=0, error_red=None)
+2026-11-11 20:53:17,106 | DEBUG   | urllib3.connectionpool | https://www.cnmv.es:443 "GET /portal/Otra-Informacion-Relevante/RSS.asmx/GetNoticiasCNMV HTTP/1.1" 200 None
+2026-11-11 20:53:17,118 | INFO    | __main__ | [OIR] 'ACS, ACTIVIDADES DE CONSTRUCCION Y SERVICIOS, S.A.' → AST_EQ_01 (cruce=alias) estado=PENDIENTE_DESCARGA | Otra información relevante
+2026-11-11 20:53:17,120 | INFO    | __main__ | [OIR] 'ACS, ACTIVIDADES DE CONSTRUCCION Y SERVICIOS, S.A.' → AST_EQ_01 (cruce=alias) estado=PENDIENTE_DESCARGA | Otra información relevante
+2026-11-11 20:53:17,121 | INFO    | __main__ | [OIR] 'ACS, ACTIVIDADES DE CONSTRUCCION Y SERVICIOS, S.A.' → AST_EQ_01 (cruce=alias) estado=PENDIENTE_DESCARGA | Otra información relevante
+2026-11-11 20:53:17,121 | DEBUG   | __main__ | [OIR] sin cruce: 'REPSOL, S.A.' | Programas de recompra de acciones, estabilización y autocartera | Operaciones realizadas por Repsol, S.A. al amparo de su Programa de Recompra de acciones e
+2026-11-11 20:53:17,124 | DEBUG   | __main__ | [OIR] sin cruce: 'MFE-MEDIAFOREUROPE N.V.' | Sobre negocio y situación financiera | MFE comunica previsiones de resultados para los primeros nueve meses de 2026, basadas en c
+2026-11-11 20:53:17,125 | INFO    | __main__ | [OIR] 'BANCO SANTANDER, S.A.' → AST_EQ_01 (cruce=alias) estado=PENDIENTE_DESCARGA | Total número de derechos de voto y de capital
+2026-11-11 20:53:17,126 | DEBUG   | __main__ | [OIR] sin cruce: 'PROMOTORA DE INFORMACIONES, S.A.' | Programas de recompra de acciones, estabilización y autocartera | La Sociedad informa de las operaciones sobre acciones propias realizadas del día 30 de oct
+2026-11-11 20:53:17,127 | DEBUG   | __main__ | [OIR] sin cruce: 'VIDRALA, S.A.' | Programas de recompra de acciones, estabilización y autocartera | VIDRALA comunica las operaciones efectuadas al amparo de su programa de recompra de accion
+2026-11-11 20:53:17,128 | DEBUG   | __main__ | [OIR] sin cruce: 'DIGI SPAIN TELECOM, S.A.' | Sobre negocio y situación financiera | La compañía remite presentación sobre sus resultados de los nueves meses de 2026
+2026-11-11 20:53:17,129 | DEBUG   | __main__ | [OIR] sin cruce: 'DIGI SPAIN TELECOM, S.A.' | Sobre negocio y situación financiera | La compañía remite información sobre sus resultados correspondientes a los nueves meses de
+2026-11-11 20:53:17,130 | DEBUG   | __main__ | [OIR] sin cruce: 'CELLNEX FINANCE COMPANY, S.A.U' | Sobre instrumentos financieros | La compañía remite información sobre la emisión de un bono
+2026-11-11 20:53:17,130 | DEBUG   | __main__ | [OIR] sin cruce: 'CELLNEX TELECOM, S.A.' | Sobre instrumentos financieros | La compañía remite información sobre la emisión de un bono
+2026-11-11 20:53:17,131 | DEBUG   | __main__ | [OIR] sin cruce: 'BANCO BILBAO VIZCAYA ARGENTARIA, S.A.' | Sobre instrumentos financieros | La Sociedad comunica que ha acordado la realización de una emisión de participaciones pref
+2026-11-11 20:53:17,132 | DEBUG   | __main__ | [OIR] sin cruce: 'NUEVA EXPRESIÓN TEXTIL, S.A' | Sobre instrumentos financieros | Renovación Programa de Pagarés
+2026-11-11 20:53:17,133 | DEBUG   | __main__ | [OIR] sin cruce: 'VOCENTO, S.A.' | Sobre negocio y situación financiera | Conference call resultados Vocento 9M26
+2026-11-11 20:53:17,133 | DEBUG   | __main__ | [OIR] sin cruce: 'VOCENTO, S.A.' | Sobre negocio y situación financiera | Simplificación del calendario de información financiera
+2026-11-11 20:53:17,134 | DEBUG   | __main__ | [OIR] sin cruce: 'VOCENTO, S.A.' | Sobre negocio y situación financiera | La sociedad remite información financiera de los primeros nueve meses 2026
+2026-11-11 20:53:17,135 | DEBUG   | __main__ | [OIR] sin cruce: 'CONSTRUCCIONES Y AUXILIAR DE FERROCARRILES, S.A' | Sobre negocio y situación financiera | CAF remite información sobre los resultados del tercer trimestre del ejercicio 2026.
+2026-11-11 20:53:17,137 | DEBUG   | __main__ | [OIR] sin cruce: 'ORYZON GENOMICS, S.A.' | Otra información relevante | La Sociedad remite información sobre los resultados del tercer trimestre de 2026
+2026-11-11 20:53:17,137 | INFO    | __main__ | Canal OIR → EstadisticasFeed(leidos=19, nuevos=19, duplicados=0, antiguos=0, invalidos=0, sin_cruce=15, pendientes=4, descartados_categoria=0, errores=0, error_red=None)
+2026-11-11 20:53:18,166 | DEBUG   | urllib3.connectionpool | https://www.cnmv.es:443 "GET /portal/hr/hechosrelevantes.asmx/GetNoticiasCNMV HTTP/1.1" 200 None
+2026-11-11 20:53:18,174 | DEBUG   | __main__ | [HR] sin cruce: 'JPMORGAN FUNDS' | Número de accionistas y patrimonio de IIC extranjeras | La entidad comunica número de accionistas y patrimonio
+2026-11-11 20:53:18,177 | DEBUG   | __main__ | [HR] sin cruce: 'RENTA 4 MEGATENDENCIAS, FI' | Reembolsos/Reducción del capital en circulación de IIC superior al 20% | Reembolsos/Reducción de capital en circulación de IIC superior al 20% - Compartimento "Ren
+2026-11-11 20:53:18,179 | DEBUG   | __main__ | [HR] sin cruce: 'BLACKROCK STRATEGIC FUNDS' | Número de accionistas y patrimonio de IIC extranjeras | La entidad comunica número de accionistas y patrimonio
+2026-11-11 20:53:18,181 | DEBUG   | __main__ | [HR] sin cruce: 'INVESCO FUNDS' | Número de accionistas y patrimonio de IIC extranjeras | La entidad comunica número de accionistas y patrimonio
+2026-11-11 20:53:18,186 | INFO    | __main__ | [HR] 'KUTXABANK 0/100 CARTERAS, FI' → AST_FD_01 (cruce=alias) estado=PENDIENTE_DESCARGA | Reembolsos/Reducción del capital en circulación de IIC superior al 20%
+2026-11-11 20:53:18,190 | DEBUG   | __main__ | [HR] sin cruce: 'NOMURA FUNDS IRELAND PLC' | Número de accionistas y patrimonio de IIC extranjeras | La entidad comunica número de accionistas y patrimonio
+2026-11-11 20:53:18,192 | DEBUG   | __main__ | [HR] sin cruce: 'WELLINGTON MANAGEMENT FUNDS (IRELAND) PLC' | Número de accionistas y patrimonio de IIC extranjeras | La entidad comunica número de accionistas y patrimonio
+2026-11-11 20:53:18,194 | DEBUG   | __main__ | [HR] sin cruce: 'GOLDMAN SACHS FUNDS II, SICAV' | Número de accionistas y patrimonio de IIC extranjeras | La entidad comunica número de accionistas y patrimonio
+2026-11-11 20:53:18,197 | DEBUG   | __main__ | [HR] sin cruce: 'MIRABAUD' | Número de accionistas y patrimonio de IIC extranjeras | La entidad comunica número de accionistas y patrimonio
+2026-11-11 20:53:18,207 | DEBUG   | __main__ | [HR] sin cruce: 'WELLINGTON MANAGEMENT FUNDS (LUXEMBOURG) III SICAV' | Número de accionistas y patrimonio de IIC extranjeras | La entidad comunica número de accionistas y patrimonio
+2026-11-11 20:53:18,210 | DEBUG   | __main__ | [HR] sin cruce: 'SANTANDER OBJETIVO 11 MESES SEP-27, FI' | Otros hechos relevantes | Patrimonio alcanzado por el fondo
+2026-11-11 20:53:18,215 | DEBUG   | __main__ | [HR] sin cruce: 'SANTANDER OBJETIVO TOP EUROPA 4, FI' | Otros hechos relevantes | Patrimonio alcanzado por el fondo
+2026-11-11 20:53:18,216 | INFO    | __main__ | Canal HR → EstadisticasFeed(leidos=12, nuevos=12, duplicados=0, antiguos=0, invalidos=0, sin_cruce=11, pendientes=1, descartados_categoria=0, errores=0, error_red=None)
