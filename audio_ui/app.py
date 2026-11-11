@@ -43,7 +43,7 @@ state = st.session_state
 def secret(name: str, default: str = "") -> str:
     """Lee de st.secrets o de variables de entorno, sin romper si no hay secrets."""
     try:
-        if name in st.secrets:
+        if name in st.secrets and str(st.secrets[name]).strip():   # vacío = no definido
             return str(st.secrets[name])
     except Exception:  # noqa: BLE001 — no hay secrets.toml
         pass
@@ -80,8 +80,12 @@ if api_key:
     except voice.VoiceError:
         pass
 
-if "db_path" not in state:
-    state["db_path"] = secret("PVG_DB_PATH", "")
+# Una vez por sesión: ruta de secrets/entorno. (El campo de Ajustes usa persist_state y puede
+# crear "db_path" vacío al empezar la sesión, por eso no basta con mirar si existe.)
+if "db_init" not in state:
+    state["db_init"] = True
+    if not state.get("db_path"):
+        state["db_path"] = secret("PVG_DB_PATH", "")
 if "cuenta" not in state:
     state["cuenta"] = store.load()
     if secret("PVG_ASESOR") and state["cuenta"]["gestor"]["nombre"] == store.DEFAULT["gestor"]["nombre"]:

@@ -21,9 +21,10 @@ import streamlit as st
 
 import avatar
 import store
+import vista_catalogo as vc
 from data_source import Alert
 from vista_gestor import format_picker
-from ui import (DIVIDEND_EVENTS, FEE_EVENTS, Ctx, bars_html, cost_html, del_, document_html, esc, eur,
+from ui import (DIVIDEND_EVENTS, FEE_EVENTS, ICON, Ctx, bars_html, cost_html, del_, document_html, esc, eur,
                 fund_short, headline, impact_eur, num, page_header, plural, show, slug, voice_phone, when)
 
 state = st.session_state
@@ -143,9 +144,12 @@ def inicio(ctx: Ctx) -> None:
     plats = {p["plataforma"] for p in pos}
     if not found:
         page_header("Todo en orden", f"Vigilamos tus {plural(len(pos), 'producto', 'productos')} en "
-                    f"{plural(len(plats), 'plataforma', 'plataformas')} ({eur(total)}). Ningún cambio te afecta "
-                    f"por ahora. Última revisión: {when(ctx.loaded_at)}.", hello=f"Hola, {me['nombre']}")
+                    f"{plural(len(plats), 'plataforma', 'plataformas')} ({eur(total)}). Ningún aviso de los "
+                    f"documentos te afecta por ahora. Última revisión: {when(ctx.loaded_at)}.",
+                    hello=f"Hola, {me['nombre']}")
+        vc.resumen(ctx, go)
         st.button("Ver qué vigilamos", icon=":material/description:", on_click=go, args=("documentos",))
+        vc.novedades(ctx)
         return
 
     ids = [a.alert_id for a, _ in found]
@@ -162,6 +166,7 @@ def inicio(ctx: Ctx) -> None:
     rows = [(p["plataforma"], f"{eur(p['importe'])} invertidos", impact_eur(alert, p["importe"])) for p in mine]
     per = ("más al año en comisiones" if alert.event_type in FEE_EVENTS and cost >= 0 else
            "menos de dividendo al año" if alert.event_type in DIVIDEND_EVENTS else "de impacto al año")
+    vc.resumen(ctx, go)
     show(f"""
 <div class="pvg-hello">{esc(hello)}</div>
 <section class="pvg-hero">
@@ -216,6 +221,7 @@ def inicio(ctx: Ctx) -> None:
                     st.download_button("Descargar MP3", audio, file_name=f"aviso_{slug(alert.fund_name)}.mp3",
                                        mime="audio/mpeg", width="stretch", on_click="ignore", key="p_dl")
                 show(f'<div class="pvg-voice">{"Voz cercana, ritmo pausado" if me["perfil"] == "principiante" else "Voz sobria, tono profesional"}</div>')
+    vc.novedades(ctx)
 
 
 # --------------------------------------------------------------------------
@@ -241,6 +247,7 @@ def cartera(ctx: Ctx) -> None:
   <div class="pvg-kpi"><span>Plataformas</span><b>{len({p['plataforma'] for p in pos})}</b></div>
   <div class="pvg-kpi {'red' if hit else ''}"><span>Con cambios</span><b>{len(hit)}</b></div>
 </div>""")
+    vc.revision_cartera(ctx)
 
     left, right = st.columns([1, 1.25], gap="large")
     with left:
@@ -267,7 +274,9 @@ def cartera(ctx: Ctx) -> None:
                     a, b, c = st.columns([3.2, 1.3, 0.35], vertical_alignment="center")
                     if p["id"] in hit:
                         chip = '<span class="pvg-chip red">Cambio detectado</span>'
-                    elif p.get("isin") and ISIN_RE.match(p["isin"].upper()):
+                    elif _isin_ok(p) is False:
+                        chip = '<span class="pvg-chip wait">Revisa el ISIN</span>'
+                    elif _isin_ok(p):
                         chip = '<span class="pvg-chip ok">Vigilando</span>'
                     else:
                         chip = '<span class="pvg-chip grey">Vigilancia limitada</span>'
@@ -280,49 +289,155 @@ def cartera(ctx: Ctx) -> None:
                                f'<div>{chip}</div></div>', unsafe_allow_html=True)
                     c.button("Borrar", key=f"del_{p['id']}", icon=":material/delete:", type="tertiary",
                              help=f"Borrar {p['nombre']}", on_click=_delete, args=(ctx, p["id"]))
+    if pos and vc.DISPONIBLE:
+        _fichas(pos)
+
+
+def _isin_ok(p: dict):
+    """True = ISIN vigilable · False = código mal escrito · None = sin ISIN o cripto (ticker)."""
+    code = (p.get("isin") or "").strip().upper()
+    if not code or p.get("tipo") == "Criptomoneda":
+        return None
+    return vc.isin_ok(code)
+
+
+def _fichas(pos: list[dict]) -> None:
+    """B y C: ficha del producto y de la plataforma, una pestaña por inversión."""
+    show('<div class="pvg-h2" style="margin-top:28px">Fichas de tus inversiones</div>'
+         '<div class="pvg-h2sub">Lo que dice nuestro catálogo de cada producto y de la plataforma donde lo tienes, '
+         'con la fuente y la fecha en que lo comprobamos.</div>')
+    orden = sorted(pos, key=lambda p: -p["importe"])
+    tabs = st.tabs([f'{p["nombre"][:28]}{"…" if len(p["nombre"]) > 28 else ""}' for p in orden])
+    for tab, p in zip(tabs, orden):
+        with tab:
+            a, b = st.columns(2, gap="medium")
+            with a:
+                with st.container(key=f"card_fp_{p['id']}"):
+                    show('<div class="pvg-label">El producto</div>' + vc.ficha_producto(p))
+            with b:
+                with st.container(key=f"card_fpl_{p['id']}"):
+                    show('<div class="pvg-label">La plataforma</div>' + vc.ficha_plataforma(p["plataforma"]))
+
+
+ADD_KEYS = ("add_pick", "add_plat", "add_tipo", "add_nombre", "add_isin", "add_importe", "add_comision", "add_fecha")
+
+
+def _fill_from(prod: dict) -> None:
+    """Rellena el formulario con un producto del catálogo."""
+    state["add_nombre"] = prod.get("nombre") or ""
+    state["add_isin"] = prod.get("isin") or prod.get("ticker") or ""
+    if prod.get("tipo") in store.TIPOS:
+        state["add_tipo"] = prod["tipo"]
+    state["add_comision"] = vc.comision_pct(prod)
+    state["add_from"] = prod.get("nombre_corto") or prod.get("nombre")
+    state.pop("add_sugs", None)
+
+
+def _on_pick() -> None:
+    """Al elegir en el buscador: si es del catálogo, rellena; si es texto libre, busca parecidos."""
+    txt = state.get("add_pick")
+    if not txt:
+        return
+    prod = next((p for p in vc.todos_los_productos() if vc.etiqueta(p) == txt), None)
+    if prod:
+        _fill_from(prod)
+        return
+    sugs = vc.buscar(txt, limite=4)
+    q = _norm(txt)
+    exact = [p for p in sugs if q in {_norm(p.get("nombre_corto")), _norm(p.get("ticker")), _norm(p.get("isin"))}]
+    if exact or len(sugs) == 1:          # "repsol", "REP" o el ISIN exacto: no hace falta preguntar
+        _fill_from((exact or sugs)[0])
+        return
+    state["add_sugs"] = sugs
+    state["add_from"] = None
+    if not sugs:
+        state["add_nombre"] = txt
+
+
+def _on_isin() -> None:
+    """Si escribe a mano un ISIN que está en el catálogo y aún no hay nombre, lo completamos."""
+    code = (state.get("add_isin") or "").strip().upper()
+    prod = vc.por_isin(code) if len(code) == 12 else None
+    if prod and not (state.get("add_nombre") or "").strip():
+        _fill_from(prod)
+
+
+def _on_plat() -> None:
+    """Si escribe 'myinv' y pulsa Enter, lo convertimos en 'MyInvestor' (nombre del catálogo)."""
+    if state.get("add_plat"):
+        state["add_plat"] = vc.nombre_oficial_plataforma(state["add_plat"])
+
+
+def _submit(ctx: Ctx) -> None:
+    g = state.get
+    errors = [n for k, n in (("add_plat", "la plataforma"), ("add_tipo", "el tipo de producto"),
+                             ("add_nombre", "el nombre"), ("add_importe", "el importe"))
+              if not (g(k).strip() if isinstance(g(k), str) else g(k))]
+    if errors:
+        state["add_err"] = "Falta " + ", ".join(errors) + "."
+        return
+    nombre = g("add_nombre").strip()
+    fecha = g("add_fecha")
+    _me(ctx)["posiciones"].append(store.new_position(
+        plataforma=g("add_plat"), tipo=g("add_tipo"), nombre=nombre, isin=(g("add_isin") or "").strip().upper(),
+        importe=float(g("add_importe")), comision=g("add_comision"), fecha=fecha.isoformat() if fecha else None))
+    _save(ctx)
+    for k in ADD_KEYS + ("add_sugs", "add_from", "add_err"):
+        state.pop(k, None)
+    st.toast(f"Añadido: {nombre}", icon="✅")
 
 
 def _add_form(ctx: Ctx, expanded: bool) -> None:
-    with st.expander("Añadir una inversión", expanded=expanded, icon=":material/add_circle:"):
-        with st.form("f_add", clear_on_submit=True, border=False):
-            c1, c2 = st.columns(2)
-            plataforma = c1.selectbox("Plataforma o exchange", store.PLATAFORMAS, index=None,
-                                      placeholder="MyInvestor, Binance…", accept_new_options=True,
-                                      help="Si no está en la lista, escríbela.")
-            tipo = c2.selectbox("Tipo de producto", store.TIPOS, index=None, placeholder="Fondo, ETF, cripto…")
-            nombre = st.text_input("Nombre del producto", placeholder="p. ej. Fondo Global Equilibrado, clase A")
-            c3, c4 = st.columns(2)
-            isin = c3.text_input("ISIN o ticker", placeholder="ES0000000001",
+    """Formulario de añadir. No usa st.form porque al elegir un producto del catálogo
+    los demás campos se tienen que rellenar en el momento."""
+    with st.expander("Añadir una inversión", expanded=expanded or bool(state.get("add_pick")),
+                     icon=":material/add_circle:"):
+        if vc.DISPONIBLE:
+            prods = vc.todos_los_productos()
+            st.selectbox("Busca tu producto en el catálogo", [vc.etiqueta(p) for p in prods], index=None,
+                         key="add_pick", on_change=_on_pick, accept_new_options=True,
+                         placeholder=f"Escribe Repsol, REP o el ISIN… ({len(prods)} productos)",
+                         help="Busca por nombre, ticker o ISIN. Si no aparece, escríbelo y pulsa Enter: "
+                              "te sugerimos parecidos o lo rellenas a mano.")
+            sugs = state.get("add_sugs")
+            if sugs:
+                show('<div class="pvg-hint">¿Te refieres a alguno de estos?</div>')
+                cols = st.columns(len(sugs))
+                for i, p in enumerate(sugs):
+                    cols[i].button(p.get("nombre_corto") or p["nombre"], key=f"sug_{i}", width="stretch",
+                                   help=vc.etiqueta(p), on_click=_fill_from, args=(p,))
+            elif sugs == [] and state.get("add_pick"):
+                show('<div class="pvg-hint amber">No está en el catálogo: completa los datos a mano.</div>')
+            elif state.get("add_from"):
+                show(f'<div class="pvg-hint">{ICON["check"]}Datos rellenados desde el catálogo: '
+                     f'{esc(state["add_from"])}. Revisa el importe y la plataforma.</div>')
+        plats = vc.plataformas_activas() or store.PLATAFORMAS
+        c1, c2 = st.columns(2)
+        with c1:
+            plataforma = st.selectbox("Plataforma o exchange", plats, index=None, key="add_plat", on_change=_on_plat,
+                                      placeholder="MyInvestor, Trade Republic…", accept_new_options=True,
+                                      help="Solo salen las que operan en España. Si la tuya no está, escríbela.")
+            if plataforma:
+                show(vc.linea_plataforma(plataforma))
+        tipo = c2.selectbox("Tipo de producto", store.TIPOS, index=None, key="add_tipo",
+                            placeholder="Fondo, ETF, cripto…")
+        st.text_input("Nombre del producto", key="add_nombre", placeholder="p. ej. Fondo Global Equilibrado, clase A")
+        c3, c4 = st.columns(2)
+        with c3:
+            code = st.text_input("ISIN o ticker", key="add_isin", placeholder="ES0173516115", on_change=_on_isin,
                                  help="El ISIN son 12 caracteres (2 letras + 10). Lo ves en la ficha del producto "
                                       "en tu app. Para criptos, el ticker (BTC, ETH…).")
-            importe = c4.number_input("Importe invertido (€)", min_value=0.0, step=100.0, value=None,
-                                      placeholder="0")
-            c5, c6 = st.columns(2)
-            comision = c5.number_input("Comisión anual (%)", min_value=0.0, max_value=10.0, step=0.05, value=None,
-                                       placeholder="Opcional", help="La que pone en el folleto o en tu app (TER).")
-            fecha = c6.date_input("Fecha de compra", value=None, max_value=date.today(), format="DD/MM/YYYY")
-            if st.form_submit_button("Añadir a mi cartera", type="primary", icon=":material/add:"):
-                errors = []
-                if not plataforma:
-                    errors.append("la plataforma")
-                if not tipo:
-                    errors.append("el tipo de producto")
-                if not nombre.strip():
-                    errors.append("el nombre")
-                if not importe:
-                    errors.append("el importe")
-                if errors:
-                    st.error("Falta " + ", ".join(errors) + ".")
-                    return
-                code = isin.strip().upper()
-                if len(code) == 12 and not ISIN_RE.match(code):
-                    st.warning("Ese ISIN no parece válido. Lo guardamos igualmente: revísalo si no te llegan avisos.")
-                _me(ctx)["posiciones"].append(store.new_position(
-                    plataforma=plataforma, tipo=tipo, nombre=nombre.strip(), isin=code, importe=float(importe),
-                    comision=comision, fecha=fecha.isoformat() if fecha else None))
-                _save(ctx)
-                st.toast(f"Añadido: {nombre.strip()}", icon="✅")
-                st.rerun()
+            if vc.DISPONIBLE:
+                show(vc.explicar_isin(code, tipo))
+        c4.number_input("Importe invertido (€)", min_value=0.0, step=100.0, value=None, placeholder="0",
+                        key="add_importe")
+        c5, c6 = st.columns(2)
+        c5.number_input("Comisión anual (%)", min_value=0.0, max_value=10.0, step=0.05, value=None,
+                        placeholder="Opcional", help="La que pone en el folleto o en tu app (TER).", key="add_comision")
+        c6.date_input("Fecha de compra", value=None, max_value=date.today(), format="DD/MM/YYYY", key="add_fecha")
+        if state.get("add_err"):
+            st.error(state.pop("add_err"))
+        st.button("Añadir a mi cartera", type="primary", icon=":material/add:", on_click=_submit, args=(ctx,))
 
 
 # --------------------------------------------------------------------------
@@ -345,15 +460,22 @@ def documentos(ctx: Ctx) -> None:
             chip = '<span class="pvg-chip red">Cambio detectado</span>'
         elif p["tipo"] in ("Criptomoneda", "Depósito o cuenta remunerada"):
             chip = '<span class="pvg-chip grey">Próximamente</span>'
-        elif ISIN_RE.match(code):
+        elif _isin_ok(p):
             chip = '<span class="pvg-chip ok">Vigilando</span>'
+        elif _isin_ok(p) is False:
+            chip = '<span class="pvg-chip wait">Revisa el ISIN</span>'
         else:
             chip = '<span class="pvg-chip wait">Falta el ISIN</span>'
+        doc = vc.documento_html(p["tipo"])
+        if doc:
+            leemos, cambios = doc
+        else:
+            leemos, cambios = esc(store.DOCUMENTO_POR_TIPO.get(p["tipo"], "Documentación del producto")), ""
         rows.append(f'<tr><td>{esc(p["nombre"])}<small>{esc(p["plataforma"])}{" · " + esc(code) if code else ""}</small></td>'
-                    f'<td>{esc(store.DOCUMENTO_POR_TIPO.get(p["tipo"], "Documentación del producto"))}</td>'
-                    f'<td>{chip}</td></tr>')
+                    f'<td>{leemos}</td>' + (f'<td>{cambios}</td>' if vc.DISPONIBLE else '') + f'<td>{chip}</td></tr>')
     with st.container(key="card_watch"):
-        show(f'<table class="pvg-table"><tr><th>Producto</th><th>Qué leemos</th><th>Estado</th></tr>{"".join(rows)}</table>')
+        head = "<th>Qué cambios vigilamos</th>" if vc.DISPONIBLE else ""
+        show(f'<table class="pvg-table"><tr><th>Producto</th><th>Qué leemos</th>{head}<th>Estado</th></tr>{"".join(rows)}</table>')
     found = matches_for(ctx)
     if found:
         show('<div class="pvg-h2" style="margin-top:26px">Cambios detectados</div>')

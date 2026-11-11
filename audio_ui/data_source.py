@@ -20,7 +20,7 @@ import os
 import re
 import sqlite3
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -281,6 +281,16 @@ DOC_LABELS = {"PROSPECTUS": "Folleto del fondo", "KIID": "Documento de datos fun
 REPO_DB = Path(__file__).resolve().parent.parent / "db" / "guardian.db"
 
 
+def _local_time(raw) -> str:
+    """SQLite guarda CURRENT_TIMESTAMP en UTC ('2026-11-11 22:20:05'): lo pasamos a la hora local."""
+    text = str(raw or "")[:19]
+    try:
+        utc = datetime.fromisoformat(text).replace(tzinfo=timezone.utc)
+        return utc.astimezone().strftime("%Y-%m-%d %H:%M")
+    except ValueError:
+        return text[:16]
+
+
 def _first_number(text: Optional[str]) -> Optional[float]:
     """'1.20% anual' -> 1.2 ; '1,65 %' -> 1.65 ; None si no hay número."""
     if not text:
@@ -332,7 +342,7 @@ def sqlite_snapshot(db_path: str) -> Snapshot:
             title = f"{title} (simulación)"
         alerts.append(Alert(
             alert_id=str(r["alert_id"]),
-            detected_at=str(r["detected_at"] or "")[:16],
+            detected_at=_local_time(r["detected_at"]),
             event_type=r["event_type"],
             fund_name=r["fund_name"],
             isin=r["isin"],
