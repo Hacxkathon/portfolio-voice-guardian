@@ -8,7 +8,9 @@ def run_end_to_end_pipeline(
     asset_id: str,
     new_doc_text: str = "",
     old_doc_text: str = "",
-    is_simulation: bool = True
+    is_simulation: bool = True,
+    new_doc_id: str = "DOC_FD_V2",
+    old_doc_id: str | None = None,
 ) -> None:
     """
     Orquestador principal (Pasos 1 al 11):
@@ -52,8 +54,8 @@ def run_end_to_end_pipeline(
     """, (
         event_id,
         asset_id,
-        "DOC_FD_V1",
-        "DOC_FD_V2",
+        old_doc_id,
+        new_doc_id,
         extracted_event.event_type,
         extracted_event.materiality,
         extracted_event.title,
