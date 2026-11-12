@@ -358,8 +358,9 @@ def sqlite_snapshot(db_path: str) -> Snapshot:
                client_message=r["client_message"])
         for r in rows["impacts"]
     ]
-    if not alerts:
-        raise ValueError("la base de datos todavía no tiene alertas (falta ejecutar el pipeline)")
+    if not clients:  # BD vacía (sin ejecutar db.seed): mejor la demo que una web en blanco
+        raise ValueError("la base de datos está vacía (falta ejecutar python -m db.seed)")
+    # Sin alertas = estado real "todo en orden": la web lo muestra tal cual, sin pasar a la demo.
 
     return Snapshot(clients, alerts, impacts, source_name=f"SQLite · {os.path.basename(db_path)}")
 
